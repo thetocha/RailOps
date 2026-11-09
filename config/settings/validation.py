@@ -1,0 +1,41 @@
+"""Production configuration guards.
+
+These helpers are imported by production settings and unit-tested without
+loading a full production environment.
+"""
+
+from __future__ import annotations
+
+from django.core.exceptions import ImproperlyConfigured
+
+PLACEHOLDER_SECRET = "replace-me"  # nosec B105: sentinel rejected in production, not a credential
+MIN_SECRET_KEY_LENGTH = 50
+
+
+def validate_production_debug(debug: bool) -> None:
+    if debug:
+        raise ImproperlyConfigured("DEBUG must be False in production.")
+
+
+def validate_production_secret_key(secret_key: str) -> None:
+    if (
+        not secret_key
+        or secret_key == PLACEHOLDER_SECRET
+        or len(secret_key) < MIN_SECRET_KEY_LENGTH
+    ):
+        raise ImproperlyConfigured(
+            "SECRET_KEY must be a strong value of at least "
+            f"{MIN_SECRET_KEY_LENGTH} characters and must not use the placeholder."
+        )
+
+
+def validate_production_allowed_hosts(allowed_hosts: list[str]) -> None:
+    if not allowed_hosts:
+        raise ImproperlyConfigured("ALLOWED_HOSTS must be set in production.")
+    if "*" in allowed_hosts:
+        raise ImproperlyConfigured("ALLOWED_HOSTS must not include '*' in production.")
+
+
+def validate_production_database_password(password: str) -> None:
+    if not password or password == PLACEHOLDER_SECRET:
+        raise ImproperlyConfigured("DB_PASSWORD must be set to a non-placeholder value.")

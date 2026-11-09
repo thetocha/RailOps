@@ -1,0 +1,11 @@
+body {
+  min-height: 100vh;
+}
+
+.railops-auth-card {
+  max-width: 28rem;
+}
+
+.form-check-input {
+  margin-top: 0.2rem;
+}

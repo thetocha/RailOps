@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Deactivate {{ target_user.username }} — RailOps{% endblock %}
+{% block content %}
+  <h1 class="h3 mb-3">Deactivate user</h1>
+  <p>Deactivate <strong>{{ target_user.username }}</strong>? They will not be able to log in. The account is not deleted.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Deactivate</button>
+    <a class="btn btn-outline-secondary" href="{% url 'user_list' %}">Cancel</a>
+  </form>
+{% endblock %}

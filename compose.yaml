@@ -1,0 +1,63 @@
+services:
+  db:
+    image: postgis/postgis:16-3.5
+    environment:
+      POSTGRES_DB: ${DB_NAME:-railops}
+      POSTGRES_USER: ${DB_USER:-railops}
+      POSTGRES_PASSWORD: ${DB_PASSWORD:-replace-me}
+    ports:
+      - "${DB_PUBLISH_PORT:-5432}:5432"
+    volumes:
+      - postgis_data:/var/lib/postgresql/data
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U railops -d railops"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+    restart: unless-stopped
+
+  app:
+    build:
+      context: .
+      dockerfile: Dockerfile
+    environment:
+      DJANGO_SETTINGS_MODULE: config.settings.development
+      SECRET_KEY: ${SECRET_KEY:-replace-me}
+      DEBUG: ${DEBUG:-True}
+      ALLOWED_HOSTS: ${ALLOWED_HOSTS:-localhost,127.0.0.1}
+      CSRF_TRUSTED_ORIGINS: ${CSRF_TRUSTED_ORIGINS:-http://localhost:8000,http://127.0.0.1:8000}
+      DB_NAME: ${DB_NAME:-railops}
+      DB_USER: ${DB_USER:-railops}
+      DB_PASSWORD: ${DB_PASSWORD:-replace-me}
+      DB_HOST: db
+      DB_PORT: "5432"
+      MEDIA_ROOT: /app/media
+      STATIC_ROOT: /app/staticfiles
+    ports:
+      - "${APP_PUBLISH_PORT:-8000}:8000"
+    depends_on:
+      db:
+        condition: service_healthy
+    command:
+      [
+        "sh",
+        "-c",
+        "python scripts/wait_for_db.py && python manage.py runserver 0.0.0.0:8000",
+      ]
+    volumes:
+      - .:/app
+    healthcheck:
+      test:
+        [
+          "CMD",
+          "python",
+          "-c",
+          "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)",
+        ]
+      interval: 15s
+      timeout: 5s
+      retries: 5
+      start_period: 25s
+
+volumes:
+  postgis_data:

@@ -1,0 +1,89 @@
+[project]
+name = "railops"
+version = "0.1.0"
+description = "Railway Operations & Analytics Platform"
+readme = "README.md"
+requires-python = ">=3.13,<3.14"
+dependencies = [
+    "django==6.1.3",
+    "django-environ==0.14.0",
+    "gunicorn==26.2.0",
+    "psycopg[binary]==3.3.8",
+]
+
+[dependency-groups]
+dev = [
+    "bandit==1.9.4",
+    "django-stubs==6.1.2",
+    "mypy==1.18.2",
+    "pip-audit==2.10.1",
+    "pytest==9.2.0",
+    "pytest-cov==7.1.0",
+    "pytest-django==4.14.0",
+    "ruff==0.17.4",
+]
+
+[tool.uv]
+package = false
+
+[tool.pytest.ini_options]
+DJANGO_SETTINGS_MODULE = "config.settings.test"
+pythonpath = ["."]
+testpaths = ["apps", "tests"]
+addopts = ["--strict-markers"]
+
+[tool.ruff]
+line-length = 100
+target-version = "py313"
+src = ["apps", "config", "tests", "scripts"]
+
+[tool.ruff.lint]
+select = [
+    "B",
+    "E",
+    "F",
+    "I",
+    "S",
+    "SIM",
+    "UP",
+    "W",
+]
+
+[tool.ruff.lint.per-file-ignores]
+"config/settings/*.py" = ["F403", "F405", "S105"]
+"**/migrations/*.py" = ["E501"]
+"tests/**" = ["S101", "S105", "S106"]
+"**/tests/**" = ["S101", "S105", "S106"]
+
+[tool.ruff.lint.isort]
+known-first-party = ["apps", "config"]
+
+[tool.mypy]
+python_version = "3.13"
+plugins = ["mypy_django_plugin.main"]
+files = ["apps", "config", "tests", "manage.py", "scripts"]
+strict = true
+warn_unused_ignores = true
+
+[tool.django-stubs]
+django_settings_module = "config.settings.test"
+
+[[tool.mypy.overrides]]
+module = ["environ"]
+ignore_missing_imports = true
+
+[[tool.mypy.overrides]]
+module = ["config.settings.development", "config.settings.test", "config.settings.production"]
+ignore_errors = true
+
+[tool.coverage.run]
+branch = true
+source = ["apps", "config"]
+omit = ["**/migrations/**", "**/tests/**"]
+
+[tool.coverage.report]
+skip_empty = true
+
+[tool.bandit]
+exclude_dirs = [".venv", "tests", "apps/accounts/tests"]
+skips = ["B101"]

@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Permission denied — RailOps{% endblock %}
+{% block content %}
+  <h1 class="h3">Permission denied</h1>
+  <p>You do not have permission to perform this action.</p>
+  {% if user.is_authenticated %}
+    <p><a href="{% url 'dashboard' %}">Return to the dashboard</a></p>
+  {% else %}
+    <p><a href="{% url 'login' %}">Log in</a></p>
+  {% endif %}
+{% endblock %}
