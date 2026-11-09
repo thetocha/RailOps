@@ -5,6 +5,7 @@ from django.contrib.auth.hashers import identify_hasher
 from django.contrib.auth.models import Group
 from django.test import Client
 
+from apps.accounts.forms import UserCreateForm
 from apps.accounts.models import User
 from apps.accounts.permissions import GROUP_DISPATCHER
 from apps.accounts.services import create_user
@@ -143,6 +144,26 @@ def test_user_cannot_deactivate_self(
     assert response.status_code == 200
     administrator.refresh_from_db()
     assert administrator.is_active is True
+
+
+def test_user_create_form_rejects_duplicate_email(
+    dispatcher: User,
+    role_groups: dict[str, Group],
+) -> None:
+    form = UserCreateForm(
+        data={
+            "username": "duplicate-mail",
+            "email": dispatcher.email,
+            "first_name": "",
+            "last_name": "",
+            "password1": CREATED_PASSWORD,
+            "password2": CREATED_PASSWORD,
+            "is_active": "on",
+            "groups": [role_groups[GROUP_DISPATCHER].pk],
+        }
+    )
+    assert not form.is_valid()
+    assert "email" in form.errors
 
 
 def test_user_create_post_without_csrf_is_rejected(administrator: User) -> None:

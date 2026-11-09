@@ -46,6 +46,7 @@ erDiagram
 | Field | Notes |
 |---|---|
 | Django auth fields | username, password hash, email, flags |
+| `email` | unique when non-blank (`accounts_user_unique_email` partial unique constraint); blank emails are allowed more than once |
 | `created_at` / `updated_at` | auto |
 | `is_active` | already on `AbstractUser`; do not duplicate |
 

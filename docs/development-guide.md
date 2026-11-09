@@ -26,8 +26,11 @@ If host ports **5432** or **8000** are already taken (common when another Postgr
 ```dotenv
 DB_PUBLISH_PORT=5433
 APP_PUBLISH_PORT=8001
-CSRF_TRUSTED_ORIGINS=http://localhost:8001,http://127.0.0.1:8001
 ```
+
+Development settings merge CSRF origins for `http://localhost` and `http://127.0.0.1` on both port **8000** and `APP_PUBLISH_PORT`. You can still set `CSRF_TRUSTED_ORIGINS` explicitly; the publish-port origins are added if missing.
+
+The production Dockerfile defaults to `DJANGO_SETTINGS_MODULE=config.settings.production`. Compose overrides that to `config.settings.development` so local `runserver` keeps working.
 
 Inside the Compose network the database still listens on 5432 (`DB_HOST=db`). `DB_PORT` is the container port, not the host publish port.
 
@@ -60,7 +63,9 @@ Optionally attach that superuser to the Administrator group (so the Users UI sho
 docker compose exec app python manage.py seed_role_groups --assign-superusers
 ```
 
-`seed_role_groups` is idempotent and safe to re-run. Groups are also created automatically after migrate. The command only adds/removes permissions on `accounts.user`; later apps can attach their own permissions to the same groups.
+`seed_role_groups` is idempotent and safe to re-run. It is the source of truth for the three role groups: re-running it restores the `accounts.user` permission catalog if someone edited those group permissions. Groups are also created automatically after migrate. The command only adds/removes permissions on `accounts.user`; later apps can attach their own permissions to the same groups.
+
+Django admin user and group CRUD is **superuser-only**. Role-based Administrators (`accounts.manage_users`) use `/accounts/users/`, not `/admin/`. They are not granted `is_staff`.
 
 Open (port **8001** on this workstation):
 
@@ -76,7 +81,7 @@ Logout is POST (button in the nav) so CSRF applies.
 
 ## Tests
 
-Always PostGIS. Never SQLite. Compose sets `DJANGO_SETTINGS_MODULE` to development for runserver, so override it for pytest:
+Always PostGIS. Never SQLite. Compose overrides the image default (`config.settings.production`) to `config.settings.development` for runserver, so override it again for pytest:
 
 ```powershell
 docker compose exec -e DJANGO_SETTINGS_MODULE=config.settings.test -e SECRET_KEY=test-insecure-secret-key-for-automated-tests-only app pytest

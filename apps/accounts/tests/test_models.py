@@ -6,6 +6,7 @@ import pytest
 from django.contrib.auth import get_user_model
 from django.contrib.auth.hashers import identify_hasher
 from django.contrib.auth.models import AbstractUser
+from django.db import IntegrityError, transaction
 from django.utils import timezone
 
 pytestmark = pytest.mark.django_db
@@ -41,6 +42,38 @@ def test_user_str_is_username() -> None:
         password="a-strong-test-password-123",
     )
     assert str(user) == "dispatcher1"
+
+
+def test_duplicate_email_is_rejected_by_unique_constraint() -> None:
+    user_model = get_user_model()
+    user_model.objects.create_user(
+        username="mail-one",
+        email="shared@example.com",
+        password="a-strong-test-password-123",
+    )
+    with pytest.raises(IntegrityError), transaction.atomic():
+        user_model.objects.create_user(
+            username="mail-two",
+            email="shared@example.com",
+            password="a-strong-test-password-123",
+        )
+
+
+def test_blank_emails_are_allowed_more_than_once() -> None:
+    user_model = get_user_model()
+    first = user_model.objects.create_user(
+        username="blank-one",
+        email="",
+        password="a-strong-test-password-123",
+    )
+    second = user_model.objects.create_user(
+        username="blank-two",
+        email="",
+        password="a-strong-test-password-123",
+    )
+    assert first.email == ""
+    assert second.email == ""
+    assert first.pk != second.pk
 
 
 def test_is_active_is_inherited_not_redeclared() -> None:

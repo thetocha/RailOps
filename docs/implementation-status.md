@@ -1,7 +1,7 @@
 # Implementation status
 
 **Updated:** 2026-11-09  
-**Current phase:** Phase 2 complete. Phases 3–12 not started.
+**Current phase:** Phase 2 complete (Bugbot follow-up applied). Phases 3–12 not started.
 
 ## Phase 1 — Project foundation
 
@@ -42,6 +42,9 @@
 - Unauthenticated redirect from dashboard, user list, password change
 - Viewer cannot create/update users (403)
 - Dispatcher cannot manage users (403) and cannot use Django admin (`is_staff` is false)
+- Role Administrator is not staff; staff-but-not-superuser cannot escalate via `/admin/`
+- Deactivated users lose sessions and are redirected to login from dashboard and password-change
+- Unique non-blank email; `/health/` exempt from SSL redirect; production image defaults to production settings
 - Administrator can create a user and assign Dispatcher
 - Direct `manage_users` permission (without Administrator group) can open the user list
 - Login/logout and password change happy paths
@@ -64,6 +67,30 @@
 | `curl http://127.0.0.1:8001/accounts/login/` | HTTP 200, CSRF + password field present |
 | `curl http://127.0.0.1:8001/` | HTTP 302 to login |
 | `docker compose exec … app python manage.py check` | `gis.W001` only (GDAL 3.6.2, known from Phase 1) |
+
+## Phase 2 follow-up — Bugbot findings
+
+**Status:** Implemented on the Phase 2 codebase. Phase 3 was not started.
+
+| Finding | Fix |
+|---|---|
+| High — Django admin privilege escalation | `sync_staff_flag()` grants `is_staff` only to superusers. `AdminSite.has_permission` and User/Group ModelAdmins are superuser-only. Role Administrators use `/accounts/users/`. |
+| Medium — deactivated sessions | `deactivate_user` / `update_user(..., is_active=False)` delete that user's DB sessions. `ActiveUserSessionMiddleware` logs out authenticated inactive users. |
+| Medium — production image settings | Dockerfile `ENV DJANGO_SETTINGS_MODULE=config.settings.production`. Compose still sets development for local runserver. |
+| Low — duplicate emails | Partial unique constraint `accounts_user_unique_email` (blank emails allowed). Forms reject duplicates. |
+| Low — role drift | Group admin is superuser-only. `seed_role_groups` remains the idempotent source of truth for `accounts.user` perms. |
+| Low — CSRF port 8001 | Development settings merge localhost/127.0.0.1 for ports 8000 and `APP_PUBLISH_PORT`. `.env.example` lists both. |
+| Low — `/health/` SSL redirect | Production `SECURE_REDIRECT_EXEMPT = [r"^health/?$"]`. |
+
+**Commands executed and results (follow-up):**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `docker compose exec app python manage.py makemigrations --check --dry-run` | No changes detected |
+| `docker compose exec app python manage.py migrate` | Applied `accounts.0003_user_unique_email` |
+| `docker compose exec … app pytest` | **63 passed** |
+| `docker compose exec … app mypy` | Success: no issues found in 48 source files |
 
 **Remaining limitations:**
 

@@ -7,6 +7,7 @@ from django.conf import settings
 from django.core.exceptions import ImproperlyConfigured
 
 from config.settings.validation import (
+    merge_local_csrf_trusted_origins,
     validate_production_allowed_hosts,
     validate_production_database_password,
     validate_production_debug,
@@ -26,9 +27,11 @@ def test_login_redirect_settings() -> None:
 
 def test_login_required_middleware_follows_authentication() -> None:
     middleware = list(settings.MIDDLEWARE)
-    auth_index = middleware.index("django.contrib.auth.middleware.AuthenticationMiddleware")
-    login_index = middleware.index("django.contrib.auth.middleware.LoginRequiredMiddleware")
-    assert login_index == auth_index + 1
+    auth = "django.contrib.auth.middleware.AuthenticationMiddleware"
+    active = "apps.accounts.middleware.ActiveUserSessionMiddleware"
+    login = "django.contrib.auth.middleware.LoginRequiredMiddleware"
+    assert middleware.index(active) == middleware.index(auth) + 1
+    assert middleware.index(login) == middleware.index(active) + 1
 
 
 def test_database_engine_is_postgis() -> None:
@@ -90,3 +93,37 @@ def test_production_module_uses_secure_defaults() -> None:
     assert "SESSION_COOKIE_HTTPONLY = True" in source
     assert "SECURE_HSTS_SECONDS" in source
     assert "SECURE_SSL_REDIRECT" in source
+    assert "SECURE_REDIRECT_EXEMPT" in source
+    assert r"^health/?$" in source
+
+
+def test_dockerfile_defaults_to_production_settings() -> None:
+    dockerfile = (Path(__file__).resolve().parents[1] / "Dockerfile").read_text(encoding="utf-8")
+    assert "DJANGO_SETTINGS_MODULE=config.settings.production" in dockerfile
+    assert "DJANGO_SETTINGS_MODULE=config.settings.development" not in dockerfile
+
+
+def test_compose_overrides_development_settings() -> None:
+    compose = (Path(__file__).resolve().parents[1] / "compose.yaml").read_text(encoding="utf-8")
+    assert "DJANGO_SETTINGS_MODULE: config.settings.development" in compose
+    assert "APP_PUBLISH_PORT: ${APP_PUBLISH_PORT:-8000}" in compose
+
+
+def test_env_example_includes_csrf_origins_for_8000_and_8001() -> None:
+    text = (Path(__file__).resolve().parents[1] / ".env.example").read_text(encoding="utf-8")
+    assert "http://localhost:8000" in text
+    assert "http://127.0.0.1:8000" in text
+    assert "http://localhost:8001" in text
+    assert "http://127.0.0.1:8001" in text
+    assert "APP_PUBLISH_PORT" in text
+
+
+def test_merge_local_csrf_trusted_origins_includes_publish_port() -> None:
+    merged = merge_local_csrf_trusted_origins(
+        ["http://localhost:8000"],
+        app_publish_port="8001",
+    )
+    assert "http://localhost:8000" in merged
+    assert "http://127.0.0.1:8000" in merged
+    assert "http://localhost:8001" in merged
+    assert "http://127.0.0.1:8001" in merged

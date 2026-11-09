@@ -8,6 +8,10 @@ class User(AbstractUser):
     Roles are Django Groups (Administrator, Dispatcher, Viewer) seeded in
     `apps.accounts.permissions.ensure_role_groups`. Authorization checks must use
     Django permissions (see `apps.accounts.permissions`), not group-name tests.
+
+    Email is unique when provided. Blank emails are allowed (createsuperuser)
+    and are excluded from the uniqueness constraint so multiple empty values
+    can coexist.
     """
 
     created_at = models.DateTimeField(auto_now_add=True)
@@ -16,6 +20,13 @@ class User(AbstractUser):
     class Meta:
         verbose_name = "user"
         verbose_name_plural = "users"
+        constraints = [
+            models.UniqueConstraint(
+                fields=("email",),
+                condition=~models.Q(email=""),
+                name="accounts_user_unique_email",
+            ),
+        ]
         permissions = [
             ("manage_users", "Can manage users and assign roles"),
             ("access_dashboard", "Can access the operations dashboard"),

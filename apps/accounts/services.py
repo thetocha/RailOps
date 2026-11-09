@@ -5,6 +5,8 @@ from __future__ import annotations
 import logging
 from collections.abc import Iterable
 
+from django.conf import settings
+from django.contrib.auth import SESSION_KEY
 from django.contrib.auth.hashers import identify_hasher
 from django.contrib.auth.models import Group
 from django.core.exceptions import PermissionDenied, ValidationError
@@ -15,22 +17,53 @@ from apps.accounts.permissions import can_manage_users, require_authenticated_us
 
 logger = logging.getLogger(__name__)
 
+_DB_SESSION_ENGINES = frozenset(
+    {
+        "django.contrib.sessions.backends.db",
+        "django.contrib.sessions.backends.cached_db",
+    }
+)
+
 
 def sync_staff_flag(user: User) -> User:
-    """Grant Django admin access when the user can manage users (or is a superuser)."""
-    if user.is_superuser:
-        if not user.is_staff:
-            user.is_staff = True
-            user.save(update_fields=["is_staff"])
-        return user
-    should_be_staff = user.groups.filter(
-        permissions__content_type__app_label="accounts",
-        permissions__codename="manage_users",
-    ).exists()
+    """Django admin is reserved for superusers.
+
+    Role-based Administrators use the application Users UI. ``is_staff`` is
+    cleared for anyone who is not a superuser so ``/admin/`` is not a
+    privilege-escalation path.
+    """
+    should_be_staff = user.is_superuser
     if user.is_staff != should_be_staff:
         user.is_staff = should_be_staff
         user.save(update_fields=["is_staff"])
     return user
+
+
+def invalidate_user_sessions(user: User) -> None:
+    """Delete persisted sessions for ``user`` so deactivation takes effect immediately."""
+    if settings.SESSION_ENGINE not in _DB_SESSION_ENGINES:
+        logger.warning(
+            "Cannot enumerate sessions for engine=%s; relying on ActiveUserSessionMiddleware",
+            settings.SESSION_ENGINE,
+        )
+        return
+
+    from django.contrib.sessions.models import Session
+
+    user_id = str(user.pk)
+    stale_keys: list[str] = []
+    for session in Session.objects.iterator():
+        data = session.get_decoded()
+        session_key = session.session_key
+        if session_key is not None and str(data.get(SESSION_KEY, "")) == user_id:
+            stale_keys.append(session_key)
+    if stale_keys:
+        Session.objects.filter(session_key__in=stale_keys).delete()
+        logger.info(
+            "Invalidated %s session(s) for username=%s",
+            len(stale_keys),
+            user.username,
+        )
 
 
 def _assert_can_manage(*, actor: User) -> None:
@@ -99,6 +132,7 @@ def update_user(
     actor = require_authenticated_user(actor)
     _assert_can_manage(actor=actor)
     group_list = list(groups)
+    became_inactive = user.is_active and not is_active
 
     if actor.pk == user.pk and not actor.is_superuser:
         if not _groups_grant_manage_users(group_list):
@@ -118,6 +152,8 @@ def update_user(
         _assert_password_is_hashed(user)
     user.groups.set(group_list)
     sync_staff_flag(user)
+    if became_inactive:
+        invalidate_user_sessions(user)
     logger.info("Updated user username=%s actor=%s", user.username, actor.username)
     return user
 
@@ -132,5 +168,6 @@ def deactivate_user(*, actor: User, user: User) -> User:
         return user
     user.is_active = False
     user.save(update_fields=["is_active", "updated_at"])
+    invalidate_user_sessions(user)
     logger.info("Deactivated user username=%s actor=%s", user.username, actor.username)
     return user

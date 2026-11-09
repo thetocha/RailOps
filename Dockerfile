@@ -6,7 +6,7 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
     PATH="/opt/venv/bin:/root/.local/bin:$PATH" \
-    DJANGO_SETTINGS_MODULE=config.settings.development
+    DJANGO_SETTINGS_MODULE=config.settings.production
 
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \

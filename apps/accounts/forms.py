@@ -25,6 +25,18 @@ _SELECT = "form-select"
 _CHECK = "form-check-input"
 
 
+def _validated_unique_email(email: str, *, exclude_pk: int | None) -> str:
+    cleaned = email.strip()
+    if not cleaned:
+        raise forms.ValidationError("Email is required.")
+    query = User.objects.filter(email=cleaned)
+    if exclude_pk is not None:
+        query = query.exclude(pk=exclude_pk)
+    if query.exists():
+        raise forms.ValidationError("A user with that email address already exists.")
+    return cleaned
+
+
 def _apply_bootstrap(form: forms.BaseForm) -> None:
     for field in form.fields.values():
         widget = field.widget
@@ -102,6 +114,9 @@ class UserCreateForm(forms.ModelForm):  # type: ignore[type-arg]
         self.fields["is_active"].initial = True
         _apply_bootstrap(self)
 
+    def clean_email(self) -> str:
+        return _validated_unique_email(self.cleaned_data.get("email") or "", exclude_pk=None)
+
     def clean_groups(self) -> list[Group]:
         groups = list(self.cleaned_data["groups"])
         allowed = set(ROLE_GROUP_NAMES)
@@ -161,6 +176,12 @@ class UserUpdateForm(forms.ModelForm):  # type: ignore[type-arg]
         if self.instance.pk:
             groups_field.initial = self.instance.groups.filter(name__in=ROLE_GROUP_NAMES)
         _apply_bootstrap(self)
+
+    def clean_email(self) -> str:
+        return _validated_unique_email(
+            self.cleaned_data.get("email") or "",
+            exclude_pk=self.instance.pk,
+        )
 
     def clean_groups(self) -> list[Group]:
         groups = list(self.cleaned_data["groups"])

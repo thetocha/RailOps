@@ -4,7 +4,7 @@ from unittest.mock import MagicMock, patch
 
 import pytest
 from django.db.utils import OperationalError
-from django.test import Client
+from django.test import Client, override_settings
 
 
 @pytest.mark.django_db
@@ -23,6 +23,21 @@ def test_health_unavailable_when_database_fails(client: Client) -> None:
     assert response.json() == {"status": "unavailable"}
     assert b"refused" not in response.content
     assert b"Traceback" not in response.content
+
+
+@pytest.mark.django_db
+def test_health_is_exempt_from_ssl_redirect() -> None:
+    with override_settings(
+        SECURE_SSL_REDIRECT=True,
+        SECURE_REDIRECT_EXEMPT=[r"^health/?$"],
+    ):
+        client = Client()
+        health = client.get("/health/")
+        assert health.status_code == 200
+        assert health.json() == {"status": "ok"}
+        login = client.get("/accounts/login/")
+        assert login.status_code == 301
+        assert login["Location"].startswith("https://")
 
 
 def test_health_does_not_leak_exception_details(client: Client) -> None:
