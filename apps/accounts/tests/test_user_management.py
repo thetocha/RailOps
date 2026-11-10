@@ -107,6 +107,25 @@ def test_administrator_user_edit_does_not_display_password_hash(
     assert b"pbkdf2" not in response.content
 
 
+def test_user_form_role_checkboxes_do_not_use_collapsed_wrapper(
+    client: Client,
+    administrator: User,
+) -> None:
+    client.force_login(administrator)
+    response = client.get("/accounts/users/create/")
+    assert response.status_code == 200
+    html = response.content.decode()
+    assert 'id="id_groups"' not in html or 'id="id_groups" class="form-check-input"' not in html
+    assert html.count('name="groups"') == 3
+    assert "Administrator" in html
+    assert "Dispatcher" in html
+    assert "Viewer" in html
+    assert 'class="form-check-input"' in html
+    assert "railops-choice-list" in html
+    assert html.rindex("Viewer") < html.index(">Save<")
+    assert html.rindex("Viewer") < html.index(">Cancel<")
+
+
 def test_create_user_service_hashes_password(
     administrator: User,
     role_groups: dict[str, Group],
