@@ -40,9 +40,12 @@ def _validated_unique_email(email: str, *, exclude_pk: int | None) -> str:
 def _apply_bootstrap(form: forms.BaseForm) -> None:
     for field in form.fields.values():
         widget = field.widget
-        if isinstance(
-            widget, (forms.CheckboxInput, forms.CheckboxSelectMultiple, forms.RadioSelect)
-        ):
+        if isinstance(widget, forms.CheckboxInput):
+            widget.attrs.setdefault("class", _CHECK)
+        elif isinstance(widget, (forms.CheckboxSelectMultiple, forms.RadioSelect)):
+            # Option inputs inherit this class. The default wrapper <div> also
+            # receives it; form_field.html renders options individually so the
+            # wrapper is not sized as a 1em Bootstrap checkbox.
             widget.attrs.setdefault("class", _CHECK)
         elif isinstance(widget, (forms.Select, forms.SelectMultiple)):
             widget.attrs.setdefault("class", _SELECT)

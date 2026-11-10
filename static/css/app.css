@@ -9,3 +9,33 @@ body {
 .form-check-input {
   margin-top: 0.2rem;
 }
+
+/* Bootstrap 5 floats legends; keep role-group headings in normal flow. */
+fieldset legend.form-label {
+  float: none;
+  width: auto;
+  font-size: 1rem;
+  margin-bottom: 0.5rem;
+}
+
+.railops-choice-list {
+  display: flex;
+  flex-direction: column;
+  gap: 0.25rem;
+}
+
+/* Django copies CheckboxSelectMultiple.attrs.class onto a wrapper <div>.
+   Bootstrap .form-check-input is 1em square and would collapse that wrapper. */
+div.form-check-input {
+  width: auto;
+  height: auto;
+  margin-top: 0;
+  background: none;
+  border: 0;
+  appearance: none;
+  display: flex;
+  flex-direction: column;
+  gap: 0.35rem;
+  float: none;
+  padding: 0;
+}

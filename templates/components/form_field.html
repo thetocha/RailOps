@@ -7,6 +7,22 @@
     {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
     {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors|join:", " }}</div>{% endif %}
   </div>
+{% elif field.field.widget.input_type == "checkbox" or field.field.widget.input_type == "radio" %}
+  {# CheckboxSelectMultiple/RadioSelect: do not render {{ field }} — Django copies #}
+  {# form-check-input onto the wrapper <div>, which Bootstrap sizes to 1em. #}
+  <fieldset class="mb-3">
+    <legend class="form-label">{{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}</legend>
+    <div class="railops-choice-list">
+      {% for option in field %}
+        <div class="form-check">
+          {{ option.tag }}
+          <label class="form-check-label" for="{{ option.id_for_label }}">{{ option.choice_label }}</label>
+        </div>
+      {% endfor %}
+    </div>
+    {% if field.help_text %}<div class="form-text">{{ field.help_text }}</div>{% endif %}
+    {% if field.errors %}<div class="invalid-feedback d-block">{{ field.errors|join:", " }}</div>{% endif %}
+  </fieldset>
 {% else %}
   <div class="mb-3">
     <label class="form-label" for="{{ field.id_for_label }}">{{ field.label }}{% if field.field.required %} <span class="text-danger" aria-hidden="true">*</span>{% endif %}</label>
