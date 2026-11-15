@@ -212,6 +212,26 @@ def test_update_incident_records_severity_change(
     assert updated.events.filter(event_type=IncidentEvent.EventType.SEVERITY_CHANGED).exists()
 
 
+def test_assign_incident_does_not_record_event_when_unchanged(
+    dispatcher: User,
+    administrator: User,
+    open_incident: Incident,
+) -> None:
+    assign_incident(
+        actor=dispatcher,
+        incident_id=open_incident.pk,
+        assignee=administrator,
+    )
+    event_count = open_incident.events.count()
+    assign_incident(
+        actor=dispatcher,
+        incident_id=open_incident.pk,
+        assignee=administrator,
+        comment="Saving again.",
+    )
+    assert open_incident.events.count() == event_count
+
+
 def test_inactive_current_assignee_can_be_kept(
     dispatcher: User,
     administrator: User,
