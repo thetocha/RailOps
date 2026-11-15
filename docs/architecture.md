@@ -1,10 +1,10 @@
 # RailOps architecture
 
-**Status:** Phase 1 foundation plus Phase 2 authentication exist (Django project, PostGIS, custom user, health, session login, role groups). Domain modules (stations, incidents, …) are still planning-only.  
-**Date:** 2026-11-09  
+**Status:** Phase 1–3 exist (Django project, PostGIS, custom user, session auth, role groups, stations, railway lines). Incidents, timetables, API, analytics, reports, and map UI remain later phases.  
+**Date:** 2026-11-15  
 **Audience:** Developers inheriting this repository.
 
-This document records architectural decisions for the Railway Operations & Analytics Platform (RailOps). Phase 1 created the Django project; domain modules remain planning-only until later phases.
+This document records architectural decisions for the Railway Operations & Analytics Platform (RailOps).
 
 ## 1. Product and scope
 

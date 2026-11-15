@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Railway lines — RailOps{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Railway lines</h1>
+    {% if perms.infrastructure.add_railwayline %}
+      <a class="btn btn-primary" href="{% url 'railway_line_create' %}">Create railway line</a>
+    {% endif %}
+  </div>
+  <form method="get" class="row g-2 mb-3" role="search">
+    <div class="col-md-5">
+      <label class="visually-hidden" for="line-search">Search railway lines</label>
+      <input id="line-search" class="form-control" type="search" name="q" value="{{ search }}" placeholder="Search name, code, or station">
+    </div>
+    <div class="col-md-3">
+      <label class="visually-hidden" for="line-status">Status</label>
+      <select id="line-status" class="form-select" name="status">
+        <option value="active"{% if status == "active" %} selected{% endif %}>Active</option>
+        <option value="inactive"{% if status == "inactive" %} selected{% endif %}>Inactive</option>
+        <option value="all"{% if status == "all" %} selected{% endif %}>All</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">Filter</button>
+    </div>
+  </form>
+  {% if page.object_list %}
+    <div class="table-responsive card shadow-sm">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Code</th>
+            <th scope="col">Name</th>
+            <th scope="col">Start</th>
+            <th scope="col">End</th>
+            <th scope="col">Active</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for line in page.object_list %}
+            <tr>
+              <td>{{ line.code }}</td>
+              <td><a href="{% url 'railway_line_detail' line.pk %}">{{ line.name }}</a></td>
+              <td>{{ line.start_station.code }}</td>
+              <td>{{ line.end_station.code }}</td>
+              <td>{% if line.is_active %}Yes{% else %}No{% endif %}</td>
+              <td>
+                <a href="{% url 'railway_line_detail' line.pk %}">View</a>
+                {% if perms.infrastructure.change_railwayline %}
+                  · <a href="{% url 'railway_line_update' line.pk %}">Edit</a>
+                  {% if line.is_active %}
+                    · <a href="{% url 'railway_line_deactivate' line.pk %}">Deactivate</a>
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    <p class="text-muted">No railway lines match this filter.</p>
+  {% endif %}
+{% endblock %}

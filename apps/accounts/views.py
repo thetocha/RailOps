@@ -33,6 +33,7 @@ from apps.accounts.forms import (
     UserCreateForm,
     UserUpdateForm,
 )
+from apps.accounts.http import remaining_querystring
 from apps.accounts.models import User
 from apps.accounts.permissions import (
     DashboardAccessMixin,
@@ -105,7 +106,7 @@ class UserListView(ManageUsersRequiredMixin, View):
         return render(
             request,
             "accounts/user_list.html",
-            {"page": page, "search": search},
+            {"page": page, "search": search, "querystring": remaining_querystring(request)},
         )
 
 

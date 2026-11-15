@@ -37,7 +37,7 @@ def _validated_unique_email(email: str, *, exclude_pk: int | None) -> str:
     return cleaned
 
 
-def _apply_bootstrap(form: forms.BaseForm) -> None:
+def apply_bootstrap(form: forms.BaseForm) -> None:
     for field in form.fields.values():
         widget = field.widget
         if isinstance(widget, forms.CheckboxInput):
@@ -60,7 +60,7 @@ class RailOpsAuthenticationForm(AuthenticationForm):
         super().__init__(*args, **kwargs)
         self.fields["username"].widget.attrs.setdefault("autocomplete", "username")
         self.fields["password"].widget.attrs.setdefault("autocomplete", "current-password")
-        _apply_bootstrap(self)
+        apply_bootstrap(self)
 
     def get_invalid_login_error(self) -> forms.ValidationError:
         username = self.data.get("username", "")
@@ -71,19 +71,19 @@ class RailOpsAuthenticationForm(AuthenticationForm):
 class StyledPasswordChangeForm(PasswordChangeForm):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        _apply_bootstrap(self)
+        apply_bootstrap(self)
 
 
 class StyledPasswordResetForm(PasswordResetForm):
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        _apply_bootstrap(self)
+        apply_bootstrap(self)
 
 
 class StyledSetPasswordForm(SetPasswordForm):  # type: ignore[type-arg]
     def __init__(self, *args: Any, **kwargs: Any) -> None:
         super().__init__(*args, **kwargs)
-        _apply_bootstrap(self)
+        apply_bootstrap(self)
 
 
 class UserCreateForm(forms.ModelForm):  # type: ignore[type-arg]
@@ -115,7 +115,7 @@ class UserCreateForm(forms.ModelForm):  # type: ignore[type-arg]
         groups_field.queryset = role_group_queryset()
         self.fields["email"].required = True
         self.fields["is_active"].initial = True
-        _apply_bootstrap(self)
+        apply_bootstrap(self)
 
     def clean_email(self) -> str:
         return _validated_unique_email(self.cleaned_data.get("email") or "", exclude_pk=None)
@@ -178,7 +178,7 @@ class UserUpdateForm(forms.ModelForm):  # type: ignore[type-arg]
         self.fields["email"].required = True
         if self.instance.pk:
             groups_field.initial = self.instance.groups.filter(name__in=ROLE_GROUP_NAMES)
-        _apply_bootstrap(self)
+        apply_bootstrap(self)
 
     def clean_email(self) -> str:
         return _validated_unique_email(

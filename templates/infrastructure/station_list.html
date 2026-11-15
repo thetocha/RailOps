@@ -1,0 +1,64 @@
+{% extends "base.html" %}
+{% block title %}Stations — RailOps{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Stations</h1>
+    {% if perms.infrastructure.add_station %}
+      <a class="btn btn-primary" href="{% url 'station_create' %}">Create station</a>
+    {% endif %}
+  </div>
+  <form method="get" class="row g-2 mb-3" role="search">
+    <div class="col-md-5">
+      <label class="visually-hidden" for="station-search">Search stations</label>
+      <input id="station-search" class="form-control" type="search" name="q" value="{{ search }}" placeholder="Search name, code, or city">
+    </div>
+    <div class="col-md-3">
+      <label class="visually-hidden" for="station-status">Status</label>
+      <select id="station-status" class="form-select" name="status">
+        <option value="active"{% if status == "active" %} selected{% endif %}>Active</option>
+        <option value="inactive"{% if status == "inactive" %} selected{% endif %}>Inactive</option>
+        <option value="all"{% if status == "all" %} selected{% endif %}>All</option>
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">Filter</button>
+    </div>
+  </form>
+  {% if page.object_list %}
+    <div class="table-responsive card shadow-sm">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Code</th>
+            <th scope="col">Name</th>
+            <th scope="col">City</th>
+            <th scope="col">Active</th>
+            <th scope="col">Actions</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for station in page.object_list %}
+            <tr>
+              <td>{{ station.code }}</td>
+              <td><a href="{% url 'station_detail' station.pk %}">{{ station.name }}</a></td>
+              <td>{{ station.city }}</td>
+              <td>{% if station.is_active %}Yes{% else %}No{% endif %}</td>
+              <td>
+                <a href="{% url 'station_detail' station.pk %}">View</a>
+                {% if perms.infrastructure.change_station %}
+                  · <a href="{% url 'station_update' station.pk %}">Edit</a>
+                  {% if station.is_active %}
+                    · <a href="{% url 'station_deactivate' station.pk %}">Deactivate</a>
+                  {% endif %}
+                {% endif %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    <p class="text-muted">No stations match this filter.</p>
+  {% endif %}
+{% endblock %}
