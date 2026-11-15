@@ -212,6 +212,26 @@ def test_update_incident_records_severity_change(
     assert updated.events.filter(event_type=IncidentEvent.EventType.SEVERITY_CHANGED).exists()
 
 
+def test_inactive_current_assignee_can_be_kept(
+    dispatcher: User,
+    administrator: User,
+    open_incident: Incident,
+) -> None:
+    assign_incident(
+        actor=dispatcher,
+        incident_id=open_incident.pk,
+        assignee=administrator,
+    )
+    administrator.is_active = False
+    administrator.save(update_fields=["is_active"])
+    kept = assign_incident(
+        actor=dispatcher,
+        incident_id=open_incident.pk,
+        assignee=administrator,
+    )
+    assert kept.assigned_to_id == administrator.pk
+
+
 def test_missing_incident_raises_validation_error(dispatcher: User) -> None:
     from uuid import uuid4
 

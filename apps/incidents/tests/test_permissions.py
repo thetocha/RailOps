@@ -1,9 +1,11 @@
 from __future__ import annotations
 
 from pathlib import Path
+from typing import cast
 
 import pytest
 from django.contrib.auth.models import Group, Permission
+from django.forms import ModelChoiceField
 from django.test import Client
 
 from apps.accounts.models import User
@@ -62,6 +64,42 @@ def test_views_do_not_hardcode_role_group_names() -> None:
     text = source.read_text(encoding="utf-8")
     for role_name in (GROUP_ADMINISTRATOR, GROUP_DISPATCHER, GROUP_VIEWER):
         assert role_name not in text
+
+
+def test_assign_form_includes_inactive_current_assignee(
+    administrator: User,
+) -> None:
+    from apps.incidents.forms import IncidentAssignForm
+
+    administrator.is_active = False
+    administrator.save(update_fields=["is_active"])
+    form = IncidentAssignForm(current_assignee=administrator)
+    assigned_field = cast("ModelChoiceField[User]", form.fields["assigned_to"])
+    queryset = assigned_field.queryset
+    assert queryset is not None
+    pks = set(queryset.values_list("pk", flat=True))
+    assert administrator.pk in pks
+
+
+def test_incident_admin_is_read_only() -> None:
+    from django.contrib.admin.sites import AdminSite
+    from django.test import RequestFactory
+
+    from apps.incidents.admin import IncidentAdmin
+    from apps.incidents.models import Incident
+
+    superuser = User.objects.create_superuser(
+        username="root",
+        email="root@example.com",
+        password="a-strong-test-password-123",
+    )
+    request = RequestFactory().get("/admin/incidents/incident/")
+    request.user = superuser
+    model_admin = IncidentAdmin(Incident, AdminSite())
+    assert model_admin.has_view_permission(request) is True
+    assert model_admin.has_add_permission(request) is False
+    assert model_admin.has_change_permission(request) is False
+    assert model_admin.has_delete_permission(request) is False
 
 
 def test_direct_add_incident_permission_opens_create(

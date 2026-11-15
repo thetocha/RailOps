@@ -50,8 +50,27 @@ class IncidentAdmin(SuperuserAdminMixin, admin.ModelAdmin):  # type: ignore[type
     list_display = ("title", "station", "severity", "status", "reporter", "reported_at")
     list_filter = ("status", "severity", "category")
     search_fields = ("title", "description")
-    readonly_fields = ("reported_at", "updated_at", "resolved_at")
+    readonly_fields = (
+        "title",
+        "description",
+        "station",
+        "railway_line",
+        "category",
+        "severity",
+        "status",
+        "reporter",
+        "assigned_to",
+        "reported_at",
+        "updated_at",
+        "resolved_at",
+    )
     inlines = [IncidentEventInline]
+
+    def has_add_permission(self, request: HttpRequest) -> bool:
+        return False
+
+    def has_change_permission(self, request: HttpRequest, obj: object | None = None) -> bool:
+        return False
 
 
 @admin.register(IncidentEvent)

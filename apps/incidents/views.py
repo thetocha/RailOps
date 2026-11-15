@@ -107,7 +107,10 @@ def _detail_context(request: HttpRequest, incident: Incident) -> dict[str, objec
         current=Incident.Status(incident.status),
         can_reopen_closed=actor.has_perm(PERM_REOPEN_CLOSED),
     )
-    assign_form = IncidentAssignForm(initial={"assigned_to": incident.assigned_to_id})
+    assign_form = IncidentAssignForm(
+        initial={"assigned_to": incident.assigned_to_id},
+        current_assignee=incident.assigned_to,
+    )
     return {
         "incident": incident,
         "events": events_for_incident(incident),
@@ -241,7 +244,7 @@ class IncidentTransitionView(ChangeIncidentRequiredMixin, View):
 class IncidentAssignView(ChangeIncidentRequiredMixin, View):
     def post(self, request: HttpRequest, pk: UUID) -> HttpResponse:
         incident = get_object_or_404(Incident, pk=pk)
-        form = IncidentAssignForm(request.POST)
+        form = IncidentAssignForm(request.POST, current_assignee=incident.assigned_to)
         if not form.is_valid():
             messages.error(request, "Choose a valid assignee.")
             return redirect("incident_detail", pk=incident.pk)

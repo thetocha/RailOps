@@ -162,7 +162,7 @@ def assign_incident(
     actor = require_authenticated_user(actor)
     _assert_perm(actor, PERM_CHANGE_INCIDENT)
     incident = _locked_incident(incident_id)
-    if assignee is not None and not assignee.is_active:
+    if assignee is not None and not assignee.is_active and assignee.pk != incident.assigned_to_id:
         raise ValidationError({"assigned_to": "Choose an active user."})
     incident.assigned_to = assignee
     incident.save(update_fields=["assigned_to", "updated_at"])

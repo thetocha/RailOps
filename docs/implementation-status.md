@@ -200,7 +200,7 @@
 | `uv run ruff check .` / `ruff format --check .` | All checks passed |
 | `uv run mypy` | Success: no issues found in 91 source files |
 | `uv run bandit …` | No issues identified |
-| `uv run pytest` | **126 passed** |
+| `uv run pytest` | **129 passed** |
 
 ## Acceptance criteria (Phase 4)
 

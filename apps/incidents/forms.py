@@ -93,10 +93,18 @@ class IncidentAssignForm(forms.Form):
         widget=forms.Textarea(attrs={"rows": 2}),
     )
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self,
+        *args: Any,
+        current_assignee: User | None = None,
+        **kwargs: Any,
+    ) -> None:
         super().__init__(*args, **kwargs)
         assigned_field = cast(forms.ModelChoiceField, self.fields["assigned_to"])  # type: ignore[type-arg]
-        assigned_field.queryset = User.objects.filter(is_active=True).order_by("username")
+        queryset = User.objects.filter(is_active=True)
+        if current_assignee is not None and current_assignee.pk:
+            queryset = User.objects.filter(Q(is_active=True) | Q(pk=current_assignee.pk))
+        assigned_field.queryset = queryset.order_by("username")
         apply_bootstrap(self)
 
 
