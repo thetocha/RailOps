@@ -130,6 +130,67 @@ def test_dispatcher_can_create_incident_but_not_station(
     assert created.json()["station_code"] == "BHF"
 
 
+def test_failed_assignment_rolls_back_incident_create(
+    api_client: APIClient,
+    dispatcher: User,
+    administrator: User,
+    berlin: Station,
+) -> None:
+    administrator.is_active = False
+    administrator.save(update_fields=["is_active"])
+    api_client.force_login(dispatcher)
+    response = api_client.post(
+        "/api/v1/incidents/",
+        {
+            "title": "Should not persist",
+            "description": "Assignment must fail atomically.",
+            "station": str(berlin.pk),
+            "category": "other",
+            "severity": "low",
+            "assigned_to": str(administrator.pk),
+        },
+        format="json",
+    )
+    assert response.status_code == 400
+    assert "assigned_to" in response.json()
+    assert not Incident.objects.exists()
+
+
+def test_failed_assignment_rolls_back_incident_update(
+    api_client: APIClient,
+    dispatcher: User,
+    administrator: User,
+    berlin: Station,
+) -> None:
+    api_client.force_login(dispatcher)
+    created = api_client.post(
+        "/api/v1/incidents/",
+        {
+            "title": "Original title",
+            "description": "Keep this description.",
+            "station": str(berlin.pk),
+            "category": "other",
+            "severity": "low",
+        },
+        format="json",
+    )
+    incident_id = created.json()["id"]
+    administrator.is_active = False
+    administrator.save(update_fields=["is_active"])
+    response = api_client.patch(
+        f"/api/v1/incidents/{incident_id}/",
+        {
+            "title": "Changed title",
+            "assigned_to": str(administrator.pk),
+        },
+        format="json",
+    )
+    assert response.status_code == 400
+    incident = Incident.objects.get(pk=incident_id)
+    assert incident.title == "Original title"
+    assert incident.assigned_to_id is None
+
+
 def test_viewer_cannot_create_or_transition_incident(
     api_client: APIClient,
     viewer: User,

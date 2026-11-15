@@ -2,6 +2,7 @@ from __future__ import annotations
 
 from typing import Any
 
+from django.db import transaction
 from django.db.models import QuerySet
 from rest_framework import viewsets
 from rest_framework.decorators import action
@@ -68,40 +69,46 @@ class IncidentViewSet(viewsets.ModelViewSet):  # type: ignore[type-arg]
     def perform_create(self, serializer: BaseSerializer[Incident]) -> None:
         actor = require_authenticated_user(self.request.user)
         data = serializer.validated_data
-        incident = create_incident(
-            actor=actor,
-            title=data["title"],
-            description=data["description"],
-            station=data["station"],
-            category=data["category"],
-            severity=data["severity"],
-            railway_line=data.get("railway_line"),
-        )
-        assigned = data.get("assigned_to")
-        if assigned is not None:
-            incident = assign_incident(actor=actor, incident_id=incident.pk, assignee=assigned)
+        with transaction.atomic():
+            incident = create_incident(
+                actor=actor,
+                title=data["title"],
+                description=data["description"],
+                station=data["station"],
+                category=data["category"],
+                severity=data["severity"],
+                railway_line=data.get("railway_line"),
+            )
+            assigned = data.get("assigned_to")
+            if assigned is not None:
+                incident = assign_incident(
+                    actor=actor,
+                    incident_id=incident.pk,
+                    assignee=assigned,
+                )
         serializer.instance = incident
 
     def perform_update(self, serializer: BaseSerializer[Incident]) -> None:
         actor = require_authenticated_user(self.request.user)
         incident: Incident = serializer.instance  # type: ignore[assignment]
         data = serializer.validated_data
-        updated = update_incident(
-            actor=actor,
-            incident_id=incident.pk,
-            title=data.get("title", incident.title),
-            description=data.get("description", incident.description),
-            station=data.get("station", incident.station),
-            category=data.get("category", incident.category),
-            severity=data.get("severity", incident.severity),
-            railway_line=data.get("railway_line", incident.railway_line),
-        )
-        if "assigned_to" in data:
-            updated = assign_incident(
+        with transaction.atomic():
+            updated = update_incident(
                 actor=actor,
-                incident_id=updated.pk,
-                assignee=data["assigned_to"],
+                incident_id=incident.pk,
+                title=data.get("title", incident.title),
+                description=data.get("description", incident.description),
+                station=data.get("station", incident.station),
+                category=data.get("category", incident.category),
+                severity=data.get("severity", incident.severity),
+                railway_line=data.get("railway_line", incident.railway_line),
             )
+            if "assigned_to" in data:
+                updated = assign_incident(
+                    actor=actor,
+                    incident_id=updated.pk,
+                    assignee=data["assigned_to"],
+                )
         serializer.instance = updated
 
     @action(detail=True, methods=["post"], url_path="transition")

@@ -318,6 +318,14 @@
 | No database internals or stack traces are exposed | **Implemented and tested** |
 | Analytics and report endpoints | **Not in Phase 6** (Phase 7 and 9) |
 
+## Phase 6 follow-up — Bugbot findings
+
+**Status:** Implemented on this branch.
+
+| Finding | Fix |
+|---|---|
+| High — incident create/update then assign used separate transactions | `perform_create` and `perform_update` wrap both service calls in `transaction.atomic()`. Failed assignment (inactive user) rolls back the incident write. Tests cover create and PATCH. |
+
 ## Remaining phases
 
 | Phase | Name | Status |
