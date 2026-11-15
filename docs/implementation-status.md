@@ -216,7 +216,7 @@
 | `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/timetables/tests,apps/integrations/tests` | No issues identified |
 | `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
 | `uv run python manage.py makemigrations --check --dry-run` | No changes detected |
-| `uv run pytest` | **125 passed** |
+| `uv run pytest` | **126 passed** |
 
 ## Acceptance criteria (Phase 5)
 

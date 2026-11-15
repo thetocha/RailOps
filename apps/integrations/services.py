@@ -83,6 +83,7 @@ def _persist_service(payload: ProviderService, *, source: TrainService.Source) -
         codes = ", ".join(sorted(set(missing_stops)))
         return f"{payload.external_id}: unknown stop stations {codes}"
 
+    incoming_sequences = {stop.stop_sequence for stop in payload.stops}
     with transaction.atomic():
         service, _created = upsert_train_service(
             external_id=payload.external_id,
@@ -102,6 +103,7 @@ def _persist_service(payload: ProviderService, *, source: TrainService.Source) -
                 actual_arrival=stop.actual_arrival,
                 actual_departure=stop.actual_departure,
             )
+        service.stops.exclude(stop_sequence__in=incoming_sequences).delete()
     return None
 
 

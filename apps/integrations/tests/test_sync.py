@@ -45,6 +45,34 @@ def test_mock_sync_is_idempotent(
     assert departure.delay_seconds == 120
 
 
+def test_reimport_removes_stops_absent_from_payload(
+    administrator: User,
+    berlin_hamburg: tuple[Station, Station],
+) -> None:
+    synchronize_timetables(actor=administrator, provider=MockRailwayProvider())
+    ice = TrainService.objects.get(external_id="MOCK-ICE501")
+    assert ice.stops.count() == 2
+    content = (
+        "external_id,train_number,origin_code,destination_code,service_date,"
+        "stop_sequence,station_code,scheduled_arrival,scheduled_departure,"
+        "actual_arrival,actual_departure\n"
+        "MOCK-ICE501,ICE 501,BHF,HH,2026-11-15,1,BHF,,"
+        "2026-11-15T07:00:00+00:00,,2026-11-15T07:02:00+00:00\n"
+    )
+    run = synchronize_timetables(
+        actor=administrator,
+        provider=CSVRailwayProvider(content=content),
+    )
+    assert run.status == ExternalSyncRun.Status.SUCCESS
+    ice.refresh_from_db()
+    assert ice.stops.count() == 1
+    remaining = ice.stops.get()
+    assert remaining.stop_sequence == 1
+    assert remaining.station.code == "BHF"
+    assert not Delay.objects.filter(train_service=ice, kind=Delay.Kind.ARRIVAL).exists()
+    assert Delay.objects.filter(train_service=ice, kind=Delay.Kind.DEPARTURE).exists()
+
+
 def test_csv_import_persists_validated_rows(
     administrator: User,
     berlin_hamburg: tuple[Station, Station],
