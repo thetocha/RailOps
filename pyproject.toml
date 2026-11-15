@@ -87,5 +87,5 @@ omit = ["**/migrations/**", "**/tests/**"]
 skip_empty = true
 
 [tool.bandit]
-exclude_dirs = [".venv", "tests", "apps/accounts/tests", "apps/infrastructure/tests", "apps/timetables/tests", "apps/integrations/tests"]
+exclude_dirs = [".venv", "tests", "apps/accounts/tests", "apps/infrastructure/tests", "apps/incidents/tests", "apps/timetables/tests", "apps/integrations/tests"]
 skips = ["B101"]

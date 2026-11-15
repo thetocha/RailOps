@@ -29,6 +29,7 @@ INSTALLED_APPS = [
     "django.contrib.gis",
     "apps.accounts.apps.AccountsConfig",
     "apps.infrastructure.apps.InfrastructureConfig",
+    "apps.incidents.apps.IncidentsConfig",
     "apps.timetables.apps.TimetablesConfig",
     "apps.integrations.apps.IntegrationsConfig",
 ]

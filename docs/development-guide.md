@@ -65,6 +65,8 @@ docker compose exec app python manage.py seed_role_groups --assign-superusers
 
 `seed_role_groups` is idempotent and safe to re-run. It is the source of truth for the three role groups: re-running it restores the `accounts.user` permission catalog if someone edited those group permissions. Groups are also created automatically after migrate. The command only adds/removes permissions on `accounts.user`. The infrastructure app attaches station and railway-line model permissions to the same groups in its own `post_migrate` handler (`ensure_infrastructure_permissions`). Administrators can create, update, and deactivate stations and lines; dispatchers and viewers can only view them. There is no HTML delete action — prefer deactivation. Django admin remains superuser-only.
 
+Incident permissions are seeded the same way. Dispatcher and Administrator can register, update, assign, and transition incidents. Viewer is read-only. Closed incidents reopen only with `incidents.reopen_closed_incident` (Administrator).
+
 Timetable and integration permissions are seeded the same way. All three roles receive `view` on train services, scheduled stops, and delays. Only Administrator receives `integrations.view_externalsyncrun` and `integrations.run_timetable_sync`. Import with:
 
 ```powershell
@@ -103,7 +105,7 @@ Host (no GDAL required):
 ```powershell
 uv run ruff check .
 uv run ruff format --check .
-uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/timetables/tests,apps/integrations/tests
+uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests
 uv run pip-audit
 ```
 

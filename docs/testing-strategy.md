@@ -1,6 +1,6 @@
 # Testing strategy
 
-**Status:** Phase 5. Foundation, auth, infrastructure, delay calculation, and timetable-sync tests exist. Incident tests live on the Phase 4 branch.
+**Status:** Phase 5. Foundation, auth, infrastructure, incident, delay calculation, and timetable-sync tests exist.
 
 ## Stack
 

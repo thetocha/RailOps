@@ -8,6 +8,7 @@ urlpatterns = [
     path("health/", health, name="health"),
     path("", include("apps.accounts.urls")),
     path("", include("apps.infrastructure.urls")),
+    path("", include("apps.incidents.urls")),
     path("", include("apps.timetables.urls")),
     path("", include("apps.integrations.urls")),
 ]

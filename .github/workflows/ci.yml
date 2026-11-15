@@ -67,7 +67,7 @@ jobs:
         run: uv run mypy
 
       - name: Bandit
-        run: uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/timetables/tests,apps/integrations/tests
+        run: uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests
 
       - name: pip-audit
         run: uv run pip-audit

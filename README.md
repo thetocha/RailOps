@@ -1,8 +1,8 @@
 # RailOps
 
-Internal railway operations and analytics platform. This repository currently contains **Phase 1 — project foundation**, **Phase 2 — authentication and permissions**, **Phase 3 — railway infrastructure**, and **Phase 5 — timetable and external integration**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD with spatial coordinates, mock/CSV/HTTP timetable import, delay tracking, quality tooling, Docker Compose, and CI.
+Internal railway operations and analytics platform. This repository currently contains **Phase 1 — project foundation**, **Phase 2 — authentication and permissions**, **Phase 3 — railway infrastructure**, **Phase 4 — incident management**, and **Phase 5 — timetable and external integration**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD with spatial coordinates, incident lifecycle with immutable history, mock/CSV/HTTP timetable import, delay tracking, quality tooling, Docker Compose, and CI.
 
-Incident management is implemented on a separate Phase 4 pull request. Later phases (API, analytics, reports, map UI) are specified in `AGENTS.md` and are **not implemented yet**.
+Later phases (API, analytics, reports, map UI) are specified in `AGENTS.md` and are **not implemented yet**.
 
 ## Technology (Phase 1)
 
@@ -85,6 +85,7 @@ manage.py
 config/                 # Django project (settings, URLs, health)
 apps/accounts/          # Custom user, roles, login, user management
 apps/infrastructure/    # Stations, railway lines, spatial fields
+apps/incidents/         # Incident lifecycle and immutable history
 apps/timetables/        # Train services, stops, delay calculation
 apps/integrations/      # Provider adapters, sync runs, CSV/HTTP import
 templates/ static/
@@ -101,7 +102,6 @@ docker compose exec app python manage.py sync_timetables --provider mock
 
 ## Known limitations
 
-- Incident management is on a separate Phase 4 PR, not this branch.
 - No REST API, analytics, PDF reports, or map UI yet (Phase 6+).
 - The HTTP provider is a licensed JSON endpoint using the RailOps schema, not a national railway API. CI uses mock/CSV only.
 - Native Windows GDAL/GEOS is not installed; GeoDjango runs in Linux containers and CI.

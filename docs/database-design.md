@@ -1,6 +1,6 @@
 # RailOps database design (initial)
 
-**Status:** Phase 1–3 and Phase 5 physical model. User, Station, RailwayLine, TrainService, ScheduledStop, Delay, and ExternalSyncRun have migrations. Incident entities remain on the Phase 4 branch.  
+**Status:** Phase 1–5 physical model. User, Station, RailwayLine, Incident, IncidentEvent, TrainService, ScheduledStop, Delay, and ExternalSyncRun have migrations.
 **Database:** PostgreSQL with PostGIS. SQLite is **not** an integration-test substitute.
 
 ## 1. Conventions
