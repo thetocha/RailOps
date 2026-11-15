@@ -60,6 +60,13 @@ def generate_monthly_operations_report(
         report.generated_at = timezone.now()
         report.error_summary = ""
         report.save(update_fields=["file", "status", "generated_at", "error_summary"])
+    except Exception:
+        logger.exception("Failed to generate report id=%s", report.pk)
+        report.status = Report.Status.FAILED
+        report.error_summary = "PDF generation failed."
+        report.save(update_fields=["status", "error_summary"])
+        return report
+    try:
         logger.info(
             "Generated report id=%s period=%s..%s actor=%s bytes=%s",
             report.pk,
@@ -69,10 +76,7 @@ def generate_monthly_operations_report(
             report.file.size,
         )
     except Exception:
-        logger.exception("Failed to generate report id=%s", report.pk)
-        report.status = Report.Status.FAILED
-        report.error_summary = "PDF generation failed."
-        report.save(update_fields=["status", "error_summary"])
+        logger.exception("Failed to log successful report id=%s", report.pk)
     return report
 
 

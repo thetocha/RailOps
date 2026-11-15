@@ -376,6 +376,14 @@
 | Failed generation is recorded | **Implemented and tested** |
 | REST report endpoints | **Not in this PR** (Phase 6 not merged; HTML `/reports/` is the Phase 9 surface) |
 
+## Phase 9 follow-up — Bugbot findings
+
+**Status:** Implemented on this branch.
+
+| Finding | Fix |
+|---|---|
+| High — success-path `logger.info` (including `report.file.size`) lived in the same `try` as generation | Persist `success` first, then log. A logging failure no longer rewrites the row as `failed` while a PDF is already stored. |
+
 ## Remaining phases
 
 | Phase | Name | Status |

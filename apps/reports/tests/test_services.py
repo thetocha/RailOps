@@ -56,6 +56,24 @@ def test_generate_records_generic_failure(
     assert report.generated_at is None
 
 
+def test_logging_failure_does_not_mark_success_as_failed(
+    administrator: User,
+    monkeypatch: pytest.MonkeyPatch,
+) -> None:
+    def boom(*args: object, **kwargs: object) -> None:
+        raise RuntimeError("log boom")
+
+    monkeypatch.setattr("apps.reports.services.logger.info", boom)
+    report = generate_monthly_operations_report(
+        actor=administrator,
+        period_start=date(2026, 11, 1),
+        period_end=date(2026, 11, 15),
+    )
+    assert report.status == Report.Status.SUCCESS
+    assert report.file
+    assert report.error_summary == ""
+
+
 def test_generate_rejects_dispatcher(dispatcher: User) -> None:
     with pytest.raises(PermissionDenied):
         generate_monthly_operations_report(
