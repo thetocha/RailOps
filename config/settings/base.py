@@ -30,6 +30,8 @@ INSTALLED_APPS = [
     "apps.accounts.apps.AccountsConfig",
     "apps.infrastructure.apps.InfrastructureConfig",
     "apps.incidents.apps.IncidentsConfig",
+    "apps.timetables.apps.TimetablesConfig",
+    "apps.integrations.apps.IntegrationsConfig",
 ]
 
 MIDDLEWARE = [
@@ -165,3 +167,7 @@ LOGGING = {
         },
     },
 }
+
+# Optional licensed timetable JSON endpoint. Empty means HTTP provider is disabled.
+EXTERNAL_RAILWAY_API_URL = env("EXTERNAL_RAILWAY_API_URL", default="")
+EXTERNAL_RAILWAY_API_KEY = env("EXTERNAL_RAILWAY_API_KEY", default="")

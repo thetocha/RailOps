@@ -1,6 +1,6 @@
 # Testing strategy
 
-**Status:** Phase 1 foundation tests exist (health, user model, PostGIS, production settings). Domain tests start in Phase 2.
+**Status:** Phase 5. Foundation, auth, infrastructure, incident, delay calculation, and timetable-sync tests exist.
 
 ## Stack
 

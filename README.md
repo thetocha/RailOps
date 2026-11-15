@@ -1,8 +1,8 @@
 # RailOps
 
-Internal railway operations and analytics platform. This repository currently contains **Phase 1 — project foundation**, **Phase 2 — authentication and permissions**, **Phase 3 — railway infrastructure**, and **Phase 4 — incident management**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD with spatial coordinates, incident lifecycle with immutable history, quality tooling, Docker Compose, and CI.
+Internal railway operations and analytics platform. This repository currently contains **Phase 1 — project foundation**, **Phase 2 — authentication and permissions**, **Phase 3 — railway infrastructure**, **Phase 4 — incident management**, and **Phase 5 — timetable and external integration**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD with spatial coordinates, incident lifecycle with immutable history, mock/CSV/HTTP timetable import, delay tracking, quality tooling, Docker Compose, and CI.
 
-Later phases (timetables, API, analytics, reports, map UI) are specified in `AGENTS.md` and are **not implemented yet**.
+Later phases (API, analytics, reports, map UI) are specified in `AGENTS.md` and are **not implemented yet**.
 
 ## Technology (Phase 1)
 
@@ -13,6 +13,8 @@ Later phases (timetables, API, analytics, reports, map UI) are specified in `AGE
 | django-environ | 0.14.0 |
 | psycopg | 3.3.8 (binary) |
 | gunicorn | 26.2.0 |
+| httpx | 0.28.1 |
+| pydantic | 2.12.4 |
 | PostgreSQL / PostGIS | `postgis/postgis:16-3.5` |
 | pytest / pytest-django | 9.2.0 / 4.14.0 |
 | ruff | 0.17.4 |
@@ -76,7 +78,7 @@ uv run ruff format --check .
 
 Copy `.env.example` to `.env`. Never commit `.env`. Placeholders such as `SECRET_KEY=replace-me` are for local development only. Production settings refuse placeholder secrets, empty/`*` `ALLOWED_HOSTS`, and `DEBUG=True`.
 
-## Project layout (Phase 4)
+## Project layout (Phase 5)
 
 ```text
 manage.py
@@ -84,14 +86,23 @@ config/                 # Django project (settings, URLs, health)
 apps/accounts/          # Custom user, roles, login, user management
 apps/infrastructure/    # Stations, railway lines, spatial fields
 apps/incidents/         # Incident lifecycle and immutable history
+apps/timetables/        # Train services, stops, delay calculation
+apps/integrations/      # Provider adapters, sync runs, CSV/HTTP import
 templates/ static/
 tests/
 compose.yaml            # PostGIS + app
 .github/workflows/ci.yml
 ```
 
+Import a deterministic mock timetable after migrate:
+
+```powershell
+docker compose exec app python manage.py sync_timetables --provider mock
+```
+
 ## Known limitations
 
-- No timetable import, REST API, analytics, PDF reports, or map UI yet (Phase 5+).
+- No REST API, analytics, PDF reports, or map UI yet (Phase 6+).
+- The HTTP provider is a licensed JSON endpoint using the RailOps schema, not a national railway API. CI uses mock/CSV only.
 - Native Windows GDAL/GEOS is not installed; GeoDjango runs in Linux containers and CI.
 - Production Dockerfile hardening (non-root image split, Nginx, Gunicorn process model) is Phase 11; the Phase 1 image is enough to run the app and tests.

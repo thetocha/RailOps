@@ -29,6 +29,9 @@
     {% if perms.incidents.view_incident %}
       <a class="btn btn-outline-primary" href="{% url 'incident_list' %}">Incidents</a>
     {% endif %}
+    {% if perms.timetables.view_trainservice %}
+      <a class="btn btn-outline-primary" href="{% url 'train_service_list' %}">Train services</a>
+    {% endif %}
     <a class="btn btn-outline-primary" href="{% url 'password_change' %}">Change password</a>
     {% if perms.accounts.manage_users %}
       <a class="btn btn-outline-primary" href="{% url 'user_list' %}">Manage users</a>
