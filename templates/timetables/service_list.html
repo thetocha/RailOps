@@ -1,0 +1,61 @@
+{% extends "base.html" %}
+{% block title %}Train services — RailOps{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Train services</h1>
+    {% if perms.integrations.run_timetable_sync %}
+      <a class="btn btn-outline-primary" href="{% url 'sync_run_list' %}">Sync runs</a>
+    {% endif %}
+  </div>
+  <form method="get" class="row g-2 mb-3" role="search">
+    <div class="col-md-3">
+      <label class="visually-hidden" for="service-search">Train number</label>
+      <input id="service-search" class="form-control" type="search" name="q" value="{{ search }}" placeholder="Train number">
+    </div>
+    <div class="col-md-3">
+      <label class="visually-hidden" for="service-date">Service date</label>
+      <input id="service-date" class="form-control" type="date" name="date" value="{{ service_date }}">
+    </div>
+    <div class="col-md-3">
+      <label class="visually-hidden" for="service-station">Station</label>
+      <select id="service-station" class="form-select" name="station">
+        <option value="">All stations</option>
+        {% for station in stations %}
+          <option value="{{ station.pk }}"{% if station_id == station.pk|stringformat:"s" %} selected{% endif %}>{{ station.code }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">Filter</button>
+    </div>
+  </form>
+  {% if page.object_list %}
+    <div class="table-responsive card shadow-sm">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Train</th>
+            <th scope="col">Date</th>
+            <th scope="col">Origin</th>
+            <th scope="col">Destination</th>
+            <th scope="col">Source</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for service in page.object_list %}
+            <tr>
+              <td><a href="{% url 'train_service_detail' service.pk %}">{{ service.train_number }}</a></td>
+              <td>{{ service.service_date }}</td>
+              <td>{{ service.origin.code }}</td>
+              <td>{{ service.destination.code }}</td>
+              <td>{{ service.get_source_display }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    <p class="text-muted">No train services match this filter.</p>
+  {% endif %}
+{% endblock %}

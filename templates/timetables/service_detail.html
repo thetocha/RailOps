@@ -1,0 +1,68 @@
+{% extends "base.html" %}
+{% load timetable_display %}
+{% block title %}{{ service.train_number }} — RailOps{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{{ service.train_number }}</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'train_service_list' %}">Back to services</a>
+  </div>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">External ID</dt>
+        <dd class="col-sm-9">{{ service.external_id }}</dd>
+        <dt class="col-sm-3">Service date</dt>
+        <dd class="col-sm-9">{{ service.service_date }}</dd>
+        <dt class="col-sm-3">Origin</dt>
+        <dd class="col-sm-9"><a href="{% url 'station_detail' service.origin.pk %}">{{ service.origin }}</a></dd>
+        <dt class="col-sm-3">Destination</dt>
+        <dd class="col-sm-9"><a href="{% url 'station_detail' service.destination.pk %}">{{ service.destination }}</a></dd>
+        <dt class="col-sm-3">Source</dt>
+        <dd class="col-sm-9">{{ service.get_source_display }}</dd>
+      </dl>
+    </div>
+  </div>
+  <h2 class="h5">Stops</h2>
+  {% if stops %}
+    <div class="table-responsive card shadow-sm">
+      <table class="table mb-0">
+        <thead>
+          <tr>
+            <th scope="col">#</th>
+            <th scope="col">Station</th>
+            <th scope="col">Scheduled arrival</th>
+            <th scope="col">Actual arrival</th>
+            <th scope="col">Scheduled departure</th>
+            <th scope="col">Actual departure</th>
+            <th scope="col">Delay</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for stop in stops %}
+            <tr>
+              <td>{{ stop.stop_sequence }}</td>
+              <td>{{ stop.station.code }}</td>
+              <td>{{ stop.scheduled_arrival|default:"—" }}</td>
+              <td>{{ stop.actual_arrival|default:"—" }}</td>
+              <td>{{ stop.scheduled_departure|default:"—" }}</td>
+              <td>{{ stop.actual_departure|default:"—" }}</td>
+              <td>
+                {% with delay=stop.delay_records.all.0 %}
+                  {% if delay %}
+                    {{ delay.delay_seconds|format_delay }}
+                    ({{ delay.get_kind_display }})
+                  {% else %}
+                    —
+                  {% endif %}
+                {% endwith %}
+              </td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    <p class="form-text mt-2">Delay is stored in seconds (negative = early). Missing actual times are not treated as on time. The on-time threshold is 300 seconds.</p>
+  {% else %}
+    <p class="text-muted">No stops imported for this service.</p>
+  {% endif %}
+{% endblock %}

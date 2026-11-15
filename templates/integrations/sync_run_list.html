@@ -1,0 +1,48 @@
+{% extends "base.html" %}
+{% block title %}Timetable sync — RailOps{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Timetable synchronization</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'train_service_list' %}">Train services</a>
+  </div>
+  {% if perms.integrations.run_timetable_sync %}
+    <form method="post" action="{% url 'timetable_sync' %}" enctype="multipart/form-data" class="card card-body shadow-sm mb-4" style="max-width: 36rem;">
+      {% csrf_token %}
+      {% include "components/form.html" %}
+      <button type="submit" class="btn btn-primary">Run synchronization</button>
+    </form>
+  {% endif %}
+  {% if page.object_list %}
+    <div class="table-responsive card shadow-sm">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Provider</th>
+            <th scope="col">Status</th>
+            <th scope="col">Processed</th>
+            <th scope="col">Created</th>
+            <th scope="col">Updated</th>
+            <th scope="col">Started</th>
+            <th scope="col">Errors</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for run in page.object_list %}
+            <tr>
+              <td>{{ run.integration_name }}</td>
+              <td>{{ run.get_status_display }}</td>
+              <td>{{ run.records_processed }}</td>
+              <td>{{ run.records_created }}</td>
+              <td>{{ run.records_updated }}</td>
+              <td>{{ run.started_at }}</td>
+              <td>{{ run.error_summary|default:"—" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    <p class="text-muted">No synchronization runs yet.</p>
+  {% endif %}
+{% endblock %}

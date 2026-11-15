@@ -8,7 +8,9 @@ dependencies = [
     "django==6.1.3",
     "django-environ==0.14.0",
     "gunicorn==26.2.0",
+    "httpx==0.28.1",
     "psycopg[binary]==3.3.8",
+    "pydantic==2.12.4",
 ]
 
 [dependency-groups]
@@ -60,7 +62,7 @@ known-first-party = ["apps", "config"]
 
 [tool.mypy]
 python_version = "3.13"
-plugins = ["mypy_django_plugin.main"]
+plugins = ["mypy_django_plugin.main", "pydantic.mypy"]
 files = ["apps", "config", "tests", "manage.py", "scripts"]
 strict = true
 warn_unused_ignores = true
@@ -85,5 +87,5 @@ omit = ["**/migrations/**", "**/tests/**"]
 skip_empty = true
 
 [tool.bandit]
-exclude_dirs = [".venv", "tests", "apps/accounts/tests", "apps/infrastructure/tests"]
+exclude_dirs = [".venv", "tests", "apps/accounts/tests", "apps/infrastructure/tests", "apps/timetables/tests", "apps/integrations/tests"]
 skips = ["B101"]

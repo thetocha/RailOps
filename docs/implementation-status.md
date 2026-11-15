@@ -1,7 +1,7 @@
 # Implementation status
 
 **Updated:** 2026-11-15  
-**Current phase:** Phase 3 complete. Phases 4–12 not started.
+**Current phase:** Phase 5 complete on this branch (from `main` after Phase 3). Phase 4 is a separate pull request and is not mixed into this branch.
 
 ## Phase 1 — Project foundation
 
@@ -173,7 +173,63 @@
 | Users see only functionality permitted by their role | **Implemented and tested** |
 | Spatial index present | **Implemented and tested** |
 
-## Phases 4–12 — not started
+## Phase 4 — Incident management
+
+**Status:** Implemented on branch `cursor/phase-4-incident-management-dbb8` (PR left for review). This Phase 5 branch does **not** include incident models or views.
+
+## Phase 5 — Timetable and external integration
+
+**Objective:** TrainService, ScheduledStop, Delay, provider adapter (mock, CSV, HTTPX), idempotent synchronization, ExternalSyncRun, management command, HTML list/detail and sync UI, tests.
+
+**Files affected (created or updated):**
+
+- `apps/timetables/` — models, delay calculation, upsert services, selectors, views, permissions, admin, tests
+- `apps/integrations/` — ExternalSyncRun, providers, synchronize_timetables, HTML sync, management command, tests
+- `apps/timetables/migrations/0001_initial_train_service_stop_delay.py`
+- `apps/integrations/migrations/0001_initial_external_sync_run.py`
+- `config/settings/base.py`, `config/urls.py`, `pyproject.toml`, `uv.lock`
+- `templates/base.html`, `templates/dashboard/home.html`, `templates/timetables/`, `templates/integrations/`
+- `.github/workflows/ci.yml`, `docs/`
+
+**Implementation details:**
+
+- Unique `(external_id, service_date)` and `(train_service, stop_sequence)` make re-import idempotent. Delay rows unique on `(scheduled_stop, kind)`.
+- Delay is `actual - scheduled` in seconds (signed). Missing actual timestamps do not create a delay of zero. MVP measured event is arrival when both arrival times exist, otherwise the one complete pair. On-time threshold is 300 seconds.
+- `RailwayProvider` protocol: `MockRailwayProvider` (deterministic ICE 501 / RE 42), `CSVRailwayProvider` (invalid rows recorded, valid rows persisted), `ExternalRailwayAPIClient` (HTTPX timeouts, retry of transport/transient errors, `Retry-After`, no retry of 4xx, Pydantic validation). This is not a national railway API.
+- `synchronize_timetables` creates `ExternalSyncRun`, validates payloads, persists through timetable services, and never stores credentials or raw payloads. HTML sync is administrator-only (`run_timetable_sync`). Viewers and dispatchers can list services.
+- Trigger: `python manage.py sync_timetables --provider mock|csv|http` and the Sync page.
+
+**Tests added or updated:**
+
+- Idempotent mock import; CSV success and invalid-row failure; unknown station does not delete existing services
+- HTTPX mock transport success, 401/400 not retried, 503 retried, 500 does not corrupt existing rows
+- Naive datetimes rejected; HTTP provider requires a configured URL
+- Viewer/dispatcher 403 on sync; administrator HTML sync; CSRF on sync POST
+- Unique constraints; overnight delay; missing actuals; management command
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 112 source files |
+| `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/timetables/tests,apps/integrations/tests` | No issues identified |
+| `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
+| `uv run python manage.py makemigrations --check --dry-run` | No changes detected |
+| `uv run pytest` | **125 passed** |
+
+## Acceptance criteria (Phase 5)
+
+| Criterion | Status |
+|---|---|
+| Timetable records can be imported | **Implemented and tested** |
+| Duplicate imports do not create duplicates | **Implemented and tested** |
+| Invalid records are rejected or safely reported | **Implemented and tested** |
+| External failures do not corrupt existing data | **Implemented and tested** |
+| Synchronization results are visible | **Implemented and tested** |
+| Mock provider supports deterministic local development | **Implemented and tested** |
+
+## Remaining phases
 
 | Phase | Name | Status |
 |---|---|---|
@@ -181,8 +237,8 @@
 | 1 | Project foundation | **Complete** |
 | 2 | Authentication and permissions | **Complete** |
 | 3 | Railway infrastructure | **Complete** |
-| 4 | Incident management | Not started |
-| 5 | Timetable and external integration | Not started |
+| 4 | Incident management | Separate PR (not on this branch) |
+| 5 | Timetable and external integration | **Complete** |
 | 6 | REST API | Not started |
 | 7 | Analytics | Not started |
 | 8 | Dashboard and frontend | Not started |

@@ -1,6 +1,6 @@
 # ADR-003: External integration adapter
 
-**Status:** Accepted (Phase 0)  
+**Status:** Accepted and implemented (Phase 5)  
 **Date:** 2026-11-09
 
 ## Context
