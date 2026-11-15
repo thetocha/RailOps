@@ -1,0 +1,87 @@
+{% extends "base.html" %}
+{% block title %}{{ incident.title }} — RailOps{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{{ incident.title }}</h1>
+    <div class="d-flex flex-wrap gap-2">
+      {% if perms.incidents.change_incident %}
+        <a class="btn btn-primary" href="{% url 'incident_update' incident.pk %}">Edit</a>
+      {% endif %}
+      <a class="btn btn-outline-secondary" href="{% url 'incident_list' %}">Back to incidents</a>
+    </div>
+  </div>
+  <div class="row g-4">
+    <div class="col-lg-7">
+      <div class="card shadow-sm mb-4">
+        <div class="card-body">
+          <dl class="row mb-0">
+            <dt class="col-sm-3">Status</dt>
+            <dd class="col-sm-9">{% include "components/status_badge.html" with status=incident.status %}</dd>
+            <dt class="col-sm-3">Severity</dt>
+            <dd class="col-sm-9">{% include "components/severity_badge.html" with severity=incident.severity %}</dd>
+            <dt class="col-sm-3">Category</dt>
+            <dd class="col-sm-9">{{ incident.get_category_display }}</dd>
+            <dt class="col-sm-3">Station</dt>
+            <dd class="col-sm-9"><a href="{% url 'station_detail' incident.station.pk %}">{{ incident.station }}</a></dd>
+            <dt class="col-sm-3">Railway line</dt>
+            <dd class="col-sm-9">
+              {% if incident.railway_line %}
+                <a href="{% url 'railway_line_detail' incident.railway_line.pk %}">{{ incident.railway_line }}</a>
+              {% else %}
+                Not linked
+              {% endif %}
+            </dd>
+            <dt class="col-sm-3">Reporter</dt>
+            <dd class="col-sm-9">{{ incident.reporter.get_username }}</dd>
+            <dt class="col-sm-3">Assigned to</dt>
+            <dd class="col-sm-9">{% if incident.assigned_to %}{{ incident.assigned_to.get_username }}{% else %}Unassigned{% endif %}</dd>
+            <dt class="col-sm-3">Reported</dt>
+            <dd class="col-sm-9">{{ incident.reported_at }}</dd>
+            <dt class="col-sm-3">Resolved</dt>
+            <dd class="col-sm-9">{% if incident.resolved_at %}{{ incident.resolved_at }}{% else %}—{% endif %}</dd>
+          </dl>
+          <hr>
+          <p class="mb-0">{{ incident.description|linebreaks }}</p>
+        </div>
+      </div>
+      <h2 class="h5">History</h2>
+      {% if events %}
+        <ol class="list-group list-group-numbered shadow-sm">
+          {% for event in events %}
+            <li class="list-group-item">
+              <div class="fw-semibold">{{ event.get_event_type_display }}</div>
+              <div class="small text-muted">{{ event.created_at }} · {{ event.actor.get_username }}</div>
+              {% if event.description %}<div>{{ event.description }}</div>{% endif %}
+            </li>
+          {% endfor %}
+        </ol>
+      {% else %}
+        <p class="text-muted">No history recorded.</p>
+      {% endif %}
+    </div>
+    {% if perms.incidents.change_incident %}
+      <div class="col-lg-5">
+        {% if next_statuses %}
+          <form method="post" action="{% url 'incident_transition' incident.pk %}" class="card card-body shadow-sm mb-3">
+            {% csrf_token %}
+            <h2 class="h6">Change status</h2>
+            {% include "components/form.html" with form=transition_form %}
+            <button type="submit" class="btn btn-primary">Update status</button>
+          </form>
+        {% endif %}
+        <form method="post" action="{% url 'incident_assign' incident.pk %}" class="card card-body shadow-sm mb-3">
+          {% csrf_token %}
+          <h2 class="h6">Assign</h2>
+          {% include "components/form.html" with form=assign_form %}
+          <button type="submit" class="btn btn-primary">Save assignment</button>
+        </form>
+        <form method="post" action="{% url 'incident_severity' incident.pk %}" class="card card-body shadow-sm mb-3">
+          {% csrf_token %}
+          <h2 class="h6">Change severity</h2>
+          {% include "components/form.html" with form=severity_form %}
+          <button type="submit" class="btn btn-primary">Save severity</button>
+        </form>
+      </div>
+    {% endif %}
+  </div>
+{% endblock %}

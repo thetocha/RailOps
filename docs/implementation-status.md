@@ -1,7 +1,7 @@
 # Implementation status
 
 **Updated:** 2026-11-15  
-**Current phase:** Phase 3 complete. Phases 4–12 not started.
+**Current phase:** Phase 4 complete. Phases 5–12 not started.
 
 ## Phase 1 — Project foundation
 
@@ -173,7 +173,46 @@
 | Users see only functionality permitted by their role | **Implemented and tested** |
 | Spatial index present | **Implemented and tested** |
 
-## Phases 4–12 — not started
+## Phase 4 — Incident management
+
+**Objective:** Incident lifecycle with immutable history, validated status transitions, assignment, filtering, and role-based access.
+
+**Files affected:** `apps/incidents/` (models, services, selectors, forms, views, permissions, admin, tests), templates, navigation, settings, CI Bandit excludes, docs.
+
+**Implementation details:**
+
+- `Incident` and `IncidentEvent` with UUID keys. Station FK is `PROTECT`; railway line and assignee are `SET_NULL`.
+- Allowed transitions: open → in progress → resolved → closed; in progress → open; resolved → in progress (clears `resolved_at`). Closed is terminal except `incidents.reopen_closed_incident` (Administrator).
+- `transition_incident` locks the incident row (`select_for_update` on the incident table only — nullable joins are omitted so PostgreSQL accepts `FOR UPDATE`), writes the incident, and inserts an immutable event in one transaction.
+- Events cannot be updated or deleted through the model API. History is displayed on the detail page.
+- Dispatcher and Administrator can register, update, assign, change severity, and transition. Viewer is read-only.
+
+**Tests added:**
+
+- Transition matrix, invalid transitions, resolved_at set/cleared, closed reopen permission
+- Event immutability, station `PROTECT`, check constraint
+- Viewer 403 on create/transition; dispatcher happy path; CSRF; list search/filter
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 91 source files |
+| `uv run bandit …` | No issues identified |
+| `uv run pytest` | **129 passed** |
+
+## Acceptance criteria (Phase 4)
+
+| Criterion | Status |
+|---|---|
+| Full incident lifecycle works | **Implemented and tested** |
+| Every relevant state change is recorded | **Implemented and tested** |
+| Invalid transitions are rejected | **Implemented and tested** |
+| Unauthorized modifications are rejected | **Implemented and tested** |
+| Database consistency is maintained | **Implemented and tested** (`resolved_at` constraint, `PROTECT`, row lock) |
+
+## Phases 5–12 — not started
 
 | Phase | Name | Status |
 |---|---|---|
@@ -181,7 +220,7 @@
 | 1 | Project foundation | **Complete** |
 | 2 | Authentication and permissions | **Complete** |
 | 3 | Railway infrastructure | **Complete** |
-| 4 | Incident management | Not started |
+| 4 | Incident management | **Complete** |
 | 5 | Timetable and external integration | Not started |
 | 6 | REST API | Not started |
 | 7 | Analytics | Not started |

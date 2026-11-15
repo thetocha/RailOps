@@ -26,6 +26,9 @@
     {% if perms.infrastructure.view_railwayline %}
       <a class="btn btn-outline-primary" href="{% url 'railway_line_list' %}">Railway lines</a>
     {% endif %}
+    {% if perms.incidents.view_incident %}
+      <a class="btn btn-outline-primary" href="{% url 'incident_list' %}">Incidents</a>
+    {% endif %}
     <a class="btn btn-outline-primary" href="{% url 'password_change' %}">Change password</a>
     {% if perms.accounts.manage_users %}
       <a class="btn btn-outline-primary" href="{% url 'user_list' %}">Manage users</a>

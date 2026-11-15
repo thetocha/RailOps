@@ -1,6 +1,6 @@
 # RailOps database design (initial)
 
-**Status:** Phase 1–3 physical model. User, Station, and RailwayLine have migrations. Incident and timetable entities remain logical until their phases.  
+**Status:** Phase 1–4 physical model. User, Station, RailwayLine, Incident, and IncidentEvent have migrations. Timetable entities remain logical until Phase 5.  
 **Database:** PostgreSQL with PostGIS. SQLite is **not** an integration-test substitute.
 
 ## 1. Conventions
