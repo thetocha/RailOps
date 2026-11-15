@@ -27,6 +27,9 @@ INSTALLED_APPS = [
     "django.contrib.messages",
     "django.contrib.staticfiles",
     "django.contrib.gis",
+    "rest_framework",
+    "django_filters",
+    "drf_spectacular",
     "apps.accounts.apps.AccountsConfig",
     "apps.infrastructure.apps.InfrastructureConfig",
     "apps.incidents.apps.IncidentsConfig",
@@ -41,7 +44,7 @@ MIDDLEWARE = [
     "django.middleware.csrf.CsrfViewMiddleware",
     "django.contrib.auth.middleware.AuthenticationMiddleware",
     "apps.accounts.middleware.ActiveUserSessionMiddleware",
-    "django.contrib.auth.middleware.LoginRequiredMiddleware",
+    "apps.accounts.middleware.LoginRequiredMiddleware",
     "django.contrib.messages.middleware.MessageMiddleware",
     "django.middleware.clickjacking.XFrameOptionsMiddleware",
 ]
@@ -171,3 +174,37 @@ LOGGING = {
 # Optional licensed timetable JSON endpoint. Empty means HTTP provider is disabled.
 EXTERNAL_RAILWAY_API_URL = env("EXTERNAL_RAILWAY_API_URL", default="")
 EXTERNAL_RAILWAY_API_KEY = env("EXTERNAL_RAILWAY_API_KEY", default="")
+
+REST_FRAMEWORK = {
+    "DEFAULT_AUTHENTICATION_CLASSES": [
+        "config.api.authentication.SessionAuthentication",
+    ],
+    "DEFAULT_PERMISSION_CLASSES": [
+        "rest_framework.permissions.IsAuthenticated",
+    ],
+    "DEFAULT_PAGINATION_CLASS": "config.api.pagination.StandardPageNumberPagination",
+    "PAGE_SIZE": 20,
+    "DEFAULT_FILTER_BACKENDS": [
+        "django_filters.rest_framework.DjangoFilterBackend",
+        "rest_framework.filters.SearchFilter",
+        "rest_framework.filters.OrderingFilter",
+    ],
+    "DEFAULT_SCHEMA_CLASS": "drf_spectacular.openapi.AutoSchema",
+    "EXCEPTION_HANDLER": "config.api.exceptions.api_exception_handler",
+    "DEFAULT_RENDERER_CLASSES": [
+        "rest_framework.renderers.JSONRenderer",
+        "rest_framework.renderers.BrowsableAPIRenderer",
+    ],
+}
+
+SPECTACULAR_SETTINGS = {
+    "TITLE": "RailOps API",
+    "DESCRIPTION": (
+        "Internal railway operations API. Session authentication. "
+        "Analytics and report endpoints are added in later phases."
+    ),
+    "VERSION": "1.0.0",
+    "SERVE_INCLUDE_SCHEMA": False,
+    "SERVE_PERMISSIONS": ["rest_framework.permissions.IsAuthenticated"],
+    "COMPONENT_SPLIT_REQUEST": True,
+}

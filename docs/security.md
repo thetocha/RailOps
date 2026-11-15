@@ -1,6 +1,6 @@
 # Security (planning)
 
-**Status:** Phase 5. Authentication, infrastructure, incident, and timetable-sync authorization are implemented; later controls remain requirements.
+**Status:** Phase 6. Authentication, infrastructure, incident, timetable-sync, and REST API authorization are implemented; later controls remain requirements.
 
 - Django password hashing; CSRF; session cookies `Secure`/`HttpOnly` in production; `ALLOWED_HOSTS`; CSRF trusted origins.
 - Groups: Administrator / Dispatcher / Viewer. Views check Django permissions, not group names.
@@ -15,4 +15,5 @@
 - Do not log passwords, tokens, API keys, cookies, or full provider payloads.
 - Report files: authorised download only; no path traversal.
 - Dedicated DB user, not superuser, in production.
+- REST API uses session authentication. `/api/` is exempt from HTML login redirects so clients receive 401 JSON. CSRF still applies to unsafe session requests. Permissions match Django model perms. OpenAPI/Swagger require authentication. Unhandled exceptions return a generic 500 body without stack traces.
 - Bandit + pip-audit in CI; do not disable security to pass tests.
