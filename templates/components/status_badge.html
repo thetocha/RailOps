@@ -1,0 +1,11 @@
+{% if status == "open" %}
+  <span class="badge text-bg-primary">Open</span>
+{% elif status == "in_progress" %}
+  <span class="badge text-bg-info">In progress</span>
+{% elif status == "resolved" %}
+  <span class="badge text-bg-success">Resolved</span>
+{% elif status == "closed" %}
+  <span class="badge text-bg-secondary">Closed</span>
+{% else %}
+  <span class="badge text-bg-light">{{ status }}</span>
+{% endif %}

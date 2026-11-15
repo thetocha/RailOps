@@ -1,8 +1,8 @@
 # RailOps
 
-Internal railway operations and analytics platform. This repository currently contains **Phase 1 — project foundation**, **Phase 2 — authentication and permissions**, and **Phase 3 — railway infrastructure**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD with spatial coordinates, quality tooling, Docker Compose, and CI.
+Internal railway operations and analytics platform. This repository currently contains **Phase 1 — project foundation**, **Phase 2 — authentication and permissions**, **Phase 3 — railway infrastructure**, and **Phase 4 — incident management**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD with spatial coordinates, incident lifecycle with immutable history, quality tooling, Docker Compose, and CI.
 
-Later phases (incidents, API, analytics, reports, map UI) are specified in `AGENTS.md` and are **not implemented yet**.
+Later phases (timetables, API, analytics, reports, map UI) are specified in `AGENTS.md` and are **not implemented yet**.
 
 ## Technology (Phase 1)
 
@@ -76,13 +76,14 @@ uv run ruff format --check .
 
 Copy `.env.example` to `.env`. Never commit `.env`. Placeholders such as `SECRET_KEY=replace-me` are for local development only. Production settings refuse placeholder secrets, empty/`*` `ALLOWED_HOSTS`, and `DEBUG=True`.
 
-## Project layout (Phase 3)
+## Project layout (Phase 4)
 
 ```text
 manage.py
 config/                 # Django project (settings, URLs, health)
 apps/accounts/          # Custom user, roles, login, user management
 apps/infrastructure/    # Stations, railway lines, spatial fields
+apps/incidents/         # Incident lifecycle and immutable history
 templates/ static/
 tests/
 compose.yaml            # PostGIS + app
@@ -91,6 +92,6 @@ compose.yaml            # PostGIS + app
 
 ## Known limitations
 
-- No incidents, REST API, analytics, PDF reports, or map UI yet (Phase 4+).
+- No timetable import, REST API, analytics, PDF reports, or map UI yet (Phase 5+).
 - Native Windows GDAL/GEOS is not installed; GeoDjango runs in Linux containers and CI.
 - Production Dockerfile hardening (non-root image split, Nginx, Gunicorn process model) is Phase 11; the Phase 1 image is enough to run the app and tests.

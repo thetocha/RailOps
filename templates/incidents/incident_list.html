@@ -1,0 +1,84 @@
+{% extends "base.html" %}
+{% block title %}Incidents — RailOps{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Incidents</h1>
+    {% if perms.incidents.add_incident %}
+      <a class="btn btn-primary" href="{% url 'incident_create' %}">Register incident</a>
+    {% endif %}
+  </div>
+  <form method="get" class="row g-2 mb-3" role="search">
+    <div class="col-md-4">
+      <label class="visually-hidden" for="incident-search">Search incidents</label>
+      <input id="incident-search" class="form-control" type="search" name="q" value="{{ search }}" placeholder="Search title, description, or station">
+    </div>
+    <div class="col-md-2">
+      <label class="visually-hidden" for="incident-status">Status</label>
+      <select id="incident-status" class="form-select" name="status">
+        <option value="">All statuses</option>
+        {% for value, label in status_choices %}
+          <option value="{{ value }}"{% if status == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="visually-hidden" for="incident-severity">Severity</label>
+      <select id="incident-severity" class="form-select" name="severity">
+        <option value="">All severities</option>
+        {% for value, label in severity_choices %}
+          <option value="{{ value }}"{% if severity == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="visually-hidden" for="incident-category">Category</label>
+      <select id="incident-category" class="form-select" name="category">
+        <option value="">All categories</option>
+        {% for value, label in category_choices %}
+          <option value="{{ value }}"{% if category == value %} selected{% endif %}>{{ label }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-md-2">
+      <label class="visually-hidden" for="incident-station">Station</label>
+      <select id="incident-station" class="form-select" name="station">
+        <option value="">All stations</option>
+        {% for station in stations %}
+          <option value="{{ station.pk }}"{% if station_id == station.pk|stringformat:"s" %} selected{% endif %}>{{ station.code }}</option>
+        {% endfor %}
+      </select>
+    </div>
+    <div class="col-auto">
+      <button type="submit" class="btn btn-outline-primary">Filter</button>
+    </div>
+  </form>
+  {% if page.object_list %}
+    <div class="table-responsive card shadow-sm">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Title</th>
+            <th scope="col">Station</th>
+            <th scope="col">Severity</th>
+            <th scope="col">Status</th>
+            <th scope="col">Reported</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for incident in page.object_list %}
+            <tr>
+              <td><a href="{% url 'incident_detail' incident.pk %}">{{ incident.title }}</a></td>
+              <td>{{ incident.station.code }}</td>
+              <td>{% include "components/severity_badge.html" with severity=incident.severity %}</td>
+              <td>{% include "components/status_badge.html" with status=incident.status %}</td>
+              <td>{{ incident.reported_at|date:"Y-m-d H:i" }}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    <p class="text-muted">No incidents match this filter.</p>
+  {% endif %}
+{% endblock %}

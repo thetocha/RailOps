@@ -94,7 +94,7 @@ Host (no GDAL required):
 ```powershell
 uv run ruff check .
 uv run ruff format --check .
-uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests
+uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests
 uv run pip-audit
 ```
 
