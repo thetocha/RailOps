@@ -31,6 +31,14 @@ def test_viewer_can_open_analytics_empty_state(client: Client, viewer: User) -> 
     assert b"On-time means delay of 300 seconds" in response.content
 
 
+def test_unrelated_query_params_still_use_default_period(client: Client, viewer: User) -> None:
+    client.force_login(viewer)
+    response = client.get("/analytics/", {"utm_source": "newsletter"})
+    assert response.status_code == 200
+    assert response.context["overview"] is not None
+    assert response.context["form"].is_bound is False
+
+
 def test_invalid_period_shows_errors_and_does_not_query(
     client: Client,
     dispatcher: User,

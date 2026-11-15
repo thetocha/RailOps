@@ -15,7 +15,8 @@ from apps.timetables.models import ON_TIME_THRESHOLD_SECONDS
 
 class AnalyticsOverviewView(ViewAnalyticsRequiredMixin, View):
     def get(self, request: HttpRequest) -> HttpResponse:
-        form = AnalyticsPeriodForm(request.GET) if request.GET else AnalyticsPeriodForm()
+        period_requested = "period_start" in request.GET or "period_end" in request.GET
+        form = AnalyticsPeriodForm(request.GET) if period_requested else AnalyticsPeriodForm()
         overview: OverviewMetrics | None = None
         if form.is_valid():
             overview = build_overview(

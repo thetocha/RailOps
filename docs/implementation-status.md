@@ -300,7 +300,7 @@
 | `uv run mypy` | Success: no issues found in 154 source files |
 | `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests` | No issues identified |
 | `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
-| `uv run pytest` | **176 passed** |
+| `uv run pytest` | **177 passed** |
 
 ## Acceptance criteria (Phase 7)
 
@@ -312,6 +312,14 @@
 | Delay metrics are mathematically consistent | **Implemented and tested** |
 | Expensive operations are bounded | **Implemented and tested** (max 366 days) |
 | REST analytics endpoints | **Not in this PR** (Phase 6 not merged; HTML `/analytics/` is the Phase 7 surface) |
+
+## Phase 7 follow-up — Bugbot findings
+
+**Status:** Implemented on this branch.
+
+| Finding | Fix |
+|---|---|
+| Medium — any GET query string bound the period form | Bind `AnalyticsPeriodForm` only when `period_start` or `period_end` is present. Unrelated params (e.g. `utm_source`) still load the default 30-day overview. |
 
 ## Remaining phases
 
