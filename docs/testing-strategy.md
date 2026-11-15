@@ -1,6 +1,6 @@
 # Testing strategy
 
-**Status:** Phase 5. Foundation, auth, infrastructure, incident, delay calculation, and timetable-sync tests exist.
+**Status:** Phase 9. Foundation, auth, infrastructure, incident, delay calculation, timetable-sync, analytics, and PDF report tests exist.
 
 ## Stack
 

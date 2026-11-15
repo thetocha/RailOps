@@ -47,6 +47,11 @@
                 <a class="nav-link" href="{% url 'analytics_overview' %}">Analytics</a>
               </li>
             {% endif %}
+            {% if perms.reports.view_report %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'report_list' %}">Reports</a>
+              </li>
+            {% endif %}
             {% if perms.integrations.view_externalsyncrun %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'sync_run_list' %}">Sync</a>

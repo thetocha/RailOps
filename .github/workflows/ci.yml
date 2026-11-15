@@ -38,14 +38,22 @@ jobs:
       - name: Check out repository
         uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
 
-      - name: Install GDAL and GEOS
+      - name: Install GDAL, GEOS, and WeasyPrint libraries
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             binutils \
+            fonts-dejavu-core \
             gdal-bin \
+            libcairo2 \
+            libgdk-pixbuf-2.0-0 \
             libgdal-dev \
             libgeos-dev \
+            libharfbuzz0b \
+            libharfbuzz-subset0 \
+            libpango-1.0-0 \
+            libpangocairo-1.0-0 \
+            libpangoft2-1.0-0 \
             libproj-dev
 
       - name: Install uv
@@ -67,7 +75,7 @@ jobs:
         run: uv run mypy
 
       - name: Bandit
-        run: uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests
+        run: uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests,apps/reports/tests
 
       - name: pip-audit
         run: uv run pip-audit

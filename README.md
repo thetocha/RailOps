@@ -1,8 +1,8 @@
 # RailOps
 
-Internal railway operations and analytics platform. This repository currently contains **Phases 1–5 and Phase 7**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD, incident lifecycle with immutable history, mock/CSV/HTTP timetable import, delay tracking, Pandas operational analytics, quality tooling, Docker Compose, and CI.
+Internal railway operations and analytics platform. This repository currently contains **Phases 1–5, Phase 7, and Phase 9**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD, incident lifecycle with immutable history, mock/CSV/HTTP timetable import, delay tracking, Pandas operational analytics, monthly PDF reports, quality tooling, Docker Compose, and CI.
 
-REST API (Phase 6), dashboard chrome/charts/map (Phase 8), and PDF reports (Phase 9) remain later phases.
+REST API (Phase 6) and dashboard chrome/charts/map (Phase 8) remain later phases.
 
 ## Technology (Phase 1)
 
@@ -16,6 +16,7 @@ REST API (Phase 6), dashboard chrome/charts/map (Phase 8), and PDF reports (Phas
 | httpx | 0.28.1 |
 | pydantic | 2.12.4 |
 | pandas | 2.3.3 |
+| weasyprint | 70.0 |
 | PostgreSQL / PostGIS | `postgis/postgis:16-3.5` |
 | pytest / pytest-django | 9.2.0 / 4.14.0 |
 | ruff | 0.17.4 |
@@ -90,6 +91,7 @@ apps/incidents/         # Incident lifecycle and immutable history
 apps/timetables/        # Train services, stops, delay calculation
 apps/integrations/      # Provider adapters, sync runs, CSV/HTTP import
 apps/analytics/         # Date-bounded incident/delay metrics (Pandas + ORM)
+apps/reports/           # Monthly operations PDF generation and download
 templates/ static/
 tests/
 compose.yaml            # PostGIS + app
@@ -104,7 +106,7 @@ docker compose exec app python manage.py sync_timetables --provider mock
 
 ## Known limitations
 
-- No REST API, PDF reports, or map UI yet (Phase 6 / 8 / 9). Analytics HTML is at `/analytics/` (on-time threshold 300 seconds; missing actuals excluded). REST `/api/v1/analytics/` waits for Phase 6.
+- No REST API or map UI yet (Phase 6 / 8). Analytics HTML is at `/analytics/` (on-time threshold 300 seconds; missing actuals excluded). Monthly PDF reports are at `/reports/` (Administrator only; max 31 days; synchronous). REST `/api/v1/analytics/` and `/api/v1/reports/` wait for Phase 6.
 - The HTTP provider is a licensed JSON endpoint using the RailOps schema, not a national railway API. CI uses mock/CSV only.
 - Native Windows GDAL/GEOS is not installed; GeoDjango runs in Linux containers and CI.
 - Production Dockerfile hardening (non-root image split, Nginx, Gunicorn process model) is Phase 11; the Phase 1 image is enough to run the app and tests.

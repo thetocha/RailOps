@@ -1,7 +1,7 @@
 # Implementation status
 
 **Updated:** 2026-11-15  
-**Current phase:** Phase 7 analytics complete on this branch. REST API remains Phase 6 (separate PR). PDF reports remain Phase 9.
+**Current phase:** Phase 9 PDF reporting complete on this branch. REST API remains Phase 6 (separate PR). Dashboard chrome remains Phase 8 (separate PR).
 
 ## Phase 1 — Project foundation
 
@@ -321,6 +321,69 @@
 |---|---|
 | Medium — any GET query string bound the period form | Bind `AnalyticsPeriodForm` only when `period_start` or `period_end` is present. Unrelated params (e.g. `utm_source`) still load the default 30-day overview. |
 
+## Phase 9 — PDF reporting
+
+**Objective:** Monthly railway operations PDF from analytics metrics, stored outside git/PostgreSQL, downloaded only with Django permissions.
+
+**Files affected (created or updated):**
+
+- `apps/reports/` — model, permissions, period validation, WeasyPrint renderer, services, HTML list/detail/create/download, tests
+- `apps/reports/migrations/0001_initial.py` — `Report` with UUID PK, period check, file storage
+- `apps/reports/static/monthly_operations.css`, `templates/reports/`
+- `config/settings/base.py`, `config/urls.py`, `templates/base.html`
+- `Dockerfile`, `.github/workflows/ci.yml` — Pango/Cairo/GdkPixbuf and DejaVu
+- `pyproject.toml`, `uv.lock` — WeasyPrint 70.0
+- `docs/architecture.md`, `docs/security.md`, `docs/testing-strategy.md`, `docs/development-guide.md`, `docs/api.md`, `docs/decisions/ADR-006-pdf-generation.md`, `README.md`
+
+**Implementation details:**
+
+- Administrator-only `reports.view_report` and `reports.add_report`. Dispatcher and Viewer receive HTTP 403. Views check Django permissions, not group names.
+- Monthly period is inclusive, maximum **31** days (stricter than analytics 366). Default is the first of the current month through today.
+- Generation is synchronous: pending row, `build_overview`, Django template, WeasyPrint, `FileField` under `MEDIA_ROOT/reports/<uuid>.pdf`. Failures store a generic error summary and do not leak exception text.
+- WeasyPrint receives HTML/CSS strings and a URL fetcher that denies remote resources. If the renderer attempts any URL fetch, generation fails.
+- Downloads re-check `view_report`, require `status=success` and a stored file, and stream `application/pdf`. Caller filenames are ignored. `/media/` is not served.
+- Large reports would later move to a background job; this MVP stays in-request because the period is bounded. REST `/api/v1/reports/` waits for Phase 6.
+
+**Tests added or updated:**
+
+- Period start after end; span of 31 days allowed; 32 days rejected; default first-of-month
+- CheckConstraint; `upload_to` ignores `../` filenames; `requested_by` PROTECT
+- Administrator-only group permissions; stale change/delete revoked; helpers follow `has_perm`
+- Successful PDF magic bytes under `reports/<uuid>.pdf`; failed generation recorded generically; dispatcher cannot generate; missing actuals empty template
+- WeasyPrint empty document; blocked URL fetcher; remote image/CSS fail closed; oversized and non-PDF renderer output rejected
+- HTML list/create/detail/download; CSRF; 403 without permission; 404 missing UUID; pending reports not downloadable
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 177 source files |
+| `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests,apps/reports/tests` | No issues identified |
+| `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
+| `uv run python manage.py makemigrations --check --dry-run` | No changes detected |
+| `uv run pytest` | **216 passed** |
+| `uv run pip-audit` | No known vulnerabilities found (WeasyPrint 70.0) |
+
+## Acceptance criteria (Phase 9)
+
+| Criterion | Status |
+|---|---|
+| Monthly report can be generated | **Implemented and tested** |
+| Data corresponds to the requested period | **Implemented and tested** (analytics `build_overview` for the same dates) |
+| PDF is readable and properly formatted | **Implemented and tested** (`%PDF-` magic; HTML template covers required sections) |
+| Unauthorized downloads are rejected | **Implemented and tested** (403 / not-available redirect) |
+| Failed generation is recorded | **Implemented and tested** |
+| REST report endpoints | **Not in this PR** (Phase 6 not merged; HTML `/reports/` is the Phase 9 surface) |
+
+## Phase 9 follow-up — Bugbot findings
+
+**Status:** Implemented on this branch.
+
+| Finding | Fix |
+|---|---|
+| High — success-path `logger.info` (including `report.file.size`) lived in the same `try` as generation | Persist `success` first, then log. A logging failure no longer rewrites the row as `failed` while a PDF is already stored. |
+
 ## Remaining phases
 
 | Phase | Name | Status |
@@ -331,10 +394,10 @@
 | 3 | Railway infrastructure | **Complete** |
 | 4 | Incident management | **Complete** |
 | 5 | Timetable and external integration | **Complete** |
-| 6 | REST API | Not started |
-| 7 | Analytics | **Complete** (this branch; required for Phases 8 and 9) |
-| 8 | Dashboard and frontend | Not started |
-| 9 | PDF reporting | Not started |
+| 6 | REST API | Separate PR (not required for Phase 9) |
+| 7 | Analytics | **Complete** (merged; required for Phase 9) |
+| 8 | Dashboard and frontend | Separate PR (not required for Phase 9) |
+| 9 | PDF reporting | **Complete** (this branch) |
 | 10 | Geospatial queries and map | Not started |
 | 11 | Production readiness | Not started |
 | 12 | Final verification | Not started |

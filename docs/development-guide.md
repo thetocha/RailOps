@@ -1,6 +1,6 @@
 # Development guide
 
-**Status:** Phase 5. Commands below were run on 2026-11-15.
+**Status:** Phase 9. Commands below were run on 2026-11-15.
 
 ## Prerequisites
 
@@ -84,7 +84,7 @@ Open (port **8001** on this workstation):
 http://127.0.0.1:8001/accounts/login/
 ```
 
-After login you land on `/` (dashboard). **Analytics** (`/analytics/`) shows incident and delay metrics for a bounded date range (default 30 days, maximum 366). Administrators see **Users** (`/accounts/users/`) — list, create, edit, deactivate, assign role groups. Dispatchers and viewers can change their own password but receive HTTP 403 on user management.
+After login you land on `/` (dashboard). **Analytics** (`/analytics/`) shows incident and delay metrics for a bounded date range (default 30 days, maximum 366). Administrators see **Reports** (`/reports/`) — generate a monthly operations PDF (maximum 31 days, synchronous) and download it. Dispatchers and viewers receive HTTP 403 on reports. Administrators also see **Users** (`/accounts/users/`) — list, create, edit, deactivate, assign role groups. Dispatchers and viewers can change their own password but receive HTTP 403 on user management. Report PDFs are stored under `MEDIA_ROOT/reports/<uuid>.pdf` (gitignored) and are not served as static files.
 
 Password reset: `/accounts/password-reset/`. In development the email is printed to the **app container log** (`docker compose logs app`). Production settings send via SMTP (`MAILERS` + `EMAIL_HOST*` env vars in `.env.example`). Django 6 uses `MAILERS` only — do not also set `EMAIL_BACKEND` as a Django setting.
 
@@ -105,7 +105,7 @@ Host (no GDAL required):
 ```powershell
 uv run ruff check .
 uv run ruff format --check .
-uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests
+uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests,apps/reports/tests
 uv run pip-audit
 ```
 
@@ -126,5 +126,7 @@ uv run python manage.py runserver
 uv run pytest
 uv run mypy
 ```
+
+WeasyPrint needs Pango, Cairo, GdkPixbuf, and a font such as DejaVu. The Dockerfile and GitHub Actions install those packages. Native Windows WeasyPrint is unverified; generate PDFs in Linux/Docker/CI.
 
 This path is **blocked on the Phase 1 Windows workstation** (`gdalinfo` not found, `find_library("gdal")` is `None`).

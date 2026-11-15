@@ -1,0 +1,66 @@
+{% extends "base.html" %}
+{% block title %}Reports — RailOps{% endblock %}
+{% block content %}
+  <h1 class="h3 mb-3">Reports</h1>
+  <p class="text-muted">
+    Generate a monthly railway operations PDF. The period cannot exceed {{ form.max_days }} days.
+    Large reports would later move to a background job; generation is synchronous for this MVP.
+  </p>
+  {% if perms.reports.add_report %}
+    <form method="post" action="{% url 'report_create' %}" class="card card-body shadow-sm mb-4">
+      {% csrf_token %}
+      <h2 class="h6">Request monthly report</h2>
+      <div class="row g-2 align-items-end">
+        <div class="col-md-3">
+          <label class="form-label" for="id_period_start">Period start</label>
+          {{ form.period_start }}
+        </div>
+        <div class="col-md-3">
+          <label class="form-label" for="id_period_end">Period end</label>
+          {{ form.period_end }}
+        </div>
+        <div class="col-auto">
+          <button type="submit" class="btn btn-primary">Generate PDF</button>
+        </div>
+      </div>
+      {% if form.non_field_errors or form.period_start.errors or form.period_end.errors %}
+        <div class="alert alert-danger mt-3 mb-0" role="alert">
+          {{ form.non_field_errors }}
+          {{ form.period_start.errors }}
+          {{ form.period_end.errors }}
+        </div>
+      {% endif %}
+    </form>
+  {% endif %}
+  {% if page.object_list %}
+    <div class="table-responsive card shadow-sm">
+      <table class="table table-striped mb-0">
+        <thead>
+          <tr>
+            <th scope="col">Period</th>
+            <th scope="col">Status</th>
+            <th scope="col">Requested by</th>
+            <th scope="col">Generated</th>
+          </tr>
+        </thead>
+        <tbody>
+          {% for report in page.object_list %}
+            <tr>
+              <td>
+                <a href="{% url 'report_detail' report.pk %}">
+                  {{ report.period_start }} – {{ report.period_end }}
+                </a>
+              </td>
+              <td>{{ report.get_status_display }}</td>
+              <td>{{ report.requested_by.get_username }}</td>
+              <td>{% if report.generated_at %}{{ report.generated_at }}{% else %}—{% endif %}</td>
+            </tr>
+          {% endfor %}
+        </tbody>
+      </table>
+    </div>
+    {% include "components/pagination.html" %}
+  {% else %}
+    <p class="text-muted">No reports have been generated yet.</p>
+  {% endif %}
+{% endblock %}

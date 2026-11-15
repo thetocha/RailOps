@@ -1,7 +1,7 @@
 # ADR-006: PDF generation and storage
 
-**Status:** Accepted (Phase 0)  
-**Date:** 2026-11-09
+**Status:** Implemented (Phase 9)  
+**Date:** 2026-11-15
 
 ## Context
 
@@ -19,9 +19,10 @@ WeasyPrint from Django templates. Store via `FileField` on configurable storage 
 
 ## Consequences
 
-- Phase 9 needs a template + CSS subset safe for print.  
-- Download view authorises then streams; no open directory listing.  
-- Native WeasyPrint on the current Windows host is **unverified**.
+- Monthly HTML template + print CSS live in `templates/reports/monthly_operations.html` and `apps/reports/static/monthly_operations.css`. WeasyPrint is given local strings and a blocked URL fetcher.
+- Download view authorises then streams; `/media/` is not served. Files sit under `MEDIA_ROOT/reports/<uuid>.pdf`.
+- Generation is synchronous and capped at 31 days. Larger jobs would need a background worker (not Celery in this MVP).
+- Native WeasyPrint on Windows remains **unverified**; CI and the Linux image install Pango/Cairo/GdkPixbuf and DejaVu fonts.
 
 ## Trade-offs
 
