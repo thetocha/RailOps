@@ -1,8 +1,8 @@
 # RailOps
 
-Internal railway operations and analytics platform. This repository currently contains **Phase 1 — project foundation**, **Phase 2 — authentication and permissions**, **Phase 3 — railway infrastructure**, **Phase 4 — incident management**, and **Phase 5 — timetable and external integration**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD with spatial coordinates, incident lifecycle with immutable history, mock/CSV/HTTP timetable import, delay tracking, quality tooling, Docker Compose, and CI.
+Internal railway operations and analytics platform. This repository currently contains **Phases 1–5 and Phase 7**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD, incident lifecycle with immutable history, mock/CSV/HTTP timetable import, delay tracking, Pandas operational analytics, quality tooling, Docker Compose, and CI.
 
-Later phases (API, analytics, reports, map UI) are specified in `AGENTS.md` and are **not implemented yet**.
+REST API (Phase 6), dashboard chrome/charts/map (Phase 8), and PDF reports (Phase 9) remain later phases.
 
 ## Technology (Phase 1)
 
@@ -15,6 +15,7 @@ Later phases (API, analytics, reports, map UI) are specified in `AGENTS.md` and 
 | gunicorn | 26.2.0 |
 | httpx | 0.28.1 |
 | pydantic | 2.12.4 |
+| pandas | 2.3.3 |
 | PostgreSQL / PostGIS | `postgis/postgis:16-3.5` |
 | pytest / pytest-django | 9.2.0 / 4.14.0 |
 | ruff | 0.17.4 |
@@ -88,6 +89,7 @@ apps/infrastructure/    # Stations, railway lines, spatial fields
 apps/incidents/         # Incident lifecycle and immutable history
 apps/timetables/        # Train services, stops, delay calculation
 apps/integrations/      # Provider adapters, sync runs, CSV/HTTP import
+apps/analytics/         # Date-bounded incident/delay metrics (Pandas + ORM)
 templates/ static/
 tests/
 compose.yaml            # PostGIS + app
@@ -102,7 +104,7 @@ docker compose exec app python manage.py sync_timetables --provider mock
 
 ## Known limitations
 
-- No REST API, analytics, PDF reports, or map UI yet (Phase 6+).
+- No REST API, PDF reports, or map UI yet (Phase 6 / 8 / 9). Analytics HTML is at `/analytics/` (on-time threshold 300 seconds; missing actuals excluded). REST `/api/v1/analytics/` waits for Phase 6.
 - The HTTP provider is a licensed JSON endpoint using the RailOps schema, not a national railway API. CI uses mock/CSV only.
 - Native Windows GDAL/GEOS is not installed; GeoDjango runs in Linux containers and CI.
 - Production Dockerfile hardening (non-root image split, Nginx, Gunicorn process model) is Phase 11; the Phase 1 image is enough to run the app and tests.

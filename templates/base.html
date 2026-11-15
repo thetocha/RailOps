@@ -42,6 +42,11 @@
                 <a class="nav-link" href="{% url 'train_service_list' %}">Train services</a>
               </li>
             {% endif %}
+            {% if perms.analytics.view_operationalanalytics %}
+              <li class="nav-item">
+                <a class="nav-link" href="{% url 'analytics_overview' %}">Analytics</a>
+              </li>
+            {% endif %}
             {% if perms.integrations.view_externalsyncrun %}
               <li class="nav-item">
                 <a class="nav-link" href="{% url 'sync_run_list' %}">Sync</a>

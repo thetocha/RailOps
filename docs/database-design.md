@@ -1,6 +1,6 @@
 # RailOps database design (initial)
 
-**Status:** Phase 1–5 physical model. User, Station, RailwayLine, Incident, IncidentEvent, TrainService, ScheduledStop, Delay, and ExternalSyncRun have migrations.
+**Status:** Phase 1–5 physical model plus Phase 7 unmanaged `OperationalAnalytics` permission carrier. User, Station, RailwayLine, Incident, IncidentEvent, TrainService, ScheduledStop, Delay, and ExternalSyncRun have table migrations.
 **Database:** PostgreSQL with PostGIS. SQLite is **not** an integration-test substitute.
 
 ## 1. Conventions

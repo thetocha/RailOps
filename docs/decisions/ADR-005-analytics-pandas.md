@@ -1,6 +1,6 @@
 # ADR-005: Analytics and Pandas
 
-**Status:** Accepted (Phase 0)  
+**Status:** Implemented (Phase 7)  
 **Date:** 2026-11-09
 
 ## Context
