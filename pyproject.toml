@@ -12,6 +12,7 @@ dependencies = [
     "pandas==2.3.3",
     "psycopg[binary]==3.3.8",
     "pydantic==2.12.4",
+    "weasyprint==70.0",
 ]
 
 [dependency-groups]
@@ -73,7 +74,7 @@ warn_unused_ignores = true
 django_settings_module = "config.settings.test"
 
 [[tool.mypy.overrides]]
-module = ["environ"]
+module = ["environ", "weasyprint", "weasyprint.*"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
@@ -89,5 +90,5 @@ omit = ["**/migrations/**", "**/tests/**"]
 skip_empty = true
 
 [tool.bandit]
-exclude_dirs = [".venv", "tests", "apps/accounts/tests", "apps/infrastructure/tests", "apps/incidents/tests", "apps/timetables/tests", "apps/integrations/tests", "apps/analytics/tests"]
+exclude_dirs = [".venv", "tests", "apps/accounts/tests", "apps/infrastructure/tests", "apps/incidents/tests", "apps/timetables/tests", "apps/integrations/tests", "apps/analytics/tests", "apps/reports/tests"]
 skips = ["B101"]

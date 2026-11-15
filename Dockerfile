@@ -11,11 +11,19 @@ ENV PYTHONDONTWRITEBYTECODE=1 \
 RUN apt-get update \
     && apt-get install -y --no-install-recommends \
         binutils \
+        fonts-dejavu-core \
         gdal-bin \
+        libcairo2 \
+        libgdk-pixbuf-2.0-0 \
         libgdal-dev \
         libgeos-dev \
-        libproj-dev \
+        libharfbuzz0b \
+        libharfbuzz-subset0 \
+        libpango-1.0-0 \
+        libpangocairo-1.0-0 \
+        libpangoft2-1.0-0 \
         libpq5 \
+        libproj-dev \
     && rm -rf /var/lib/apt/lists/*
 
 COPY --from=ghcr.io/astral-sh/uv:0.12.7 /uv /usr/local/bin/uv

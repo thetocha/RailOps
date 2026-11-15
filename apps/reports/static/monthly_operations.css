@@ -1,0 +1,45 @@
+@page {
+  size: A4;
+  margin: 1.5cm;
+}
+
+body {
+  font-family: DejaVu Sans, sans-serif;
+  font-size: 11pt;
+  color: #111;
+}
+
+h1 {
+  font-size: 18pt;
+  margin: 0 0 0.4rem;
+}
+
+h2 {
+  font-size: 13pt;
+  margin: 1.2rem 0 0.4rem;
+}
+
+p, li, td, th {
+  line-height: 1.35;
+}
+
+.meta {
+  color: #444;
+  margin-bottom: 1rem;
+}
+
+table {
+  width: 100%;
+  border-collapse: collapse;
+  margin-bottom: 0.8rem;
+}
+
+th, td {
+  border: 1px solid #ccc;
+  padding: 0.25rem 0.4rem;
+  text-align: left;
+}
+
+th {
+  background: #f3f3f3;
+}

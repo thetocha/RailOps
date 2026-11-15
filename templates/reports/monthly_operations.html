@@ -1,0 +1,138 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8">
+  <title>Monthly railway operations report</title>
+</head>
+<body>
+  <h1>Monthly railway operations report</h1>
+  <p class="meta">
+    Reporting period: {{ overview.period_start }} to {{ overview.period_end }}.
+    Generated {{ generated_at|date:"Y-m-d H:i e" }} by {{ requested_by }}.
+  </p>
+
+  <h2>Overall operational summary</h2>
+  <table>
+    <tbody>
+      <tr><th>Total incidents</th><td>{{ overview.incidents.total }}</td></tr>
+      <tr><th>Open incidents</th><td>{{ overview.incidents.open_count }}</td></tr>
+      <tr><th>Resolved or closed</th><td>{{ overview.incidents.resolved_count }}</td></tr>
+      <tr><th>Train services</th><td>{{ overview.delays.total_services }}</td></tr>
+      <tr><th>Delayed services</th><td>{{ overview.delays.delayed_services }}</td></tr>
+      <tr>
+        <th>On-time performance</th>
+        <td>
+          {% if overview.delays.on_time_percentage is not None %}
+            {{ overview.delays.on_time_percentage|floatformat:1 }}%
+          {% else %}
+            n/a (no measured actual times)
+          {% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+  <p>On-time means delay of {{ on_time_threshold_seconds }} seconds or less. Missing actual times are excluded.</p>
+
+  <h2>Incident statistics</h2>
+  <table>
+    <tbody>
+      <tr>
+        <th>Average resolution</th>
+        <td>
+          {% if overview.incidents.average_resolution_seconds is not None %}
+            {{ overview.incidents.average_resolution_seconds|floatformat:0 }} s
+          {% else %}n/a{% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>Median resolution</th>
+        <td>
+          {% if overview.incidents.median_resolution_seconds is not None %}
+            {{ overview.incidents.median_resolution_seconds|floatformat:0 }} s
+          {% else %}n/a{% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Severity breakdown</h2>
+  <table>
+    <thead><tr><th>Severity</th><th>Count</th></tr></thead>
+    <tbody>
+      {% for item in overview.incidents.by_severity %}
+        <tr><td>{{ item.label }}</td><td>{{ item.count }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2">No incidents in this period.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Incident trends</h2>
+  <table>
+    <thead><tr><th>Month</th><th>Count</th></tr></thead>
+    <tbody>
+      {% for item in overview.incidents.volume_by_month %}
+        <tr><td>{{ item.label }}</td><td>{{ item.count }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2">No monthly volume.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+
+  <h2>Delay statistics</h2>
+  <table>
+    <tbody>
+      <tr>
+        <th>Average delay</th>
+        <td>
+          {% if overview.delays.average_delay_seconds is not None %}
+            {{ overview.delays.average_delay_seconds|floatformat:0 }} s
+          {% else %}n/a{% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>Median delay</th>
+        <td>
+          {% if overview.delays.median_delay_seconds is not None %}
+            {{ overview.delays.median_delay_seconds|floatformat:0 }} s
+          {% else %}n/a{% endif %}
+        </td>
+      </tr>
+      <tr>
+        <th>Maximum delay</th>
+        <td>
+          {% if overview.delays.maximum_delay_seconds is not None %}
+            {{ overview.delays.maximum_delay_seconds }} s
+          {% else %}n/a{% endif %}
+        </td>
+      </tr>
+    </tbody>
+  </table>
+
+  <h2>Most problematic stations</h2>
+  <table>
+    <thead><tr><th>Station</th><th>Incidents</th></tr></thead>
+    <tbody>
+      {% for item in overview.incidents.per_station %}
+        <tr><td>{{ item.label }}</td><td>{{ item.count }}</td></tr>
+      {% empty %}
+        <tr><td colspan="2">No station incident counts.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+  <table>
+    <thead><tr><th>Station</th><th>Average delay (s)</th><th>Samples</th></tr></thead>
+    <tbody>
+      {% for item in overview.delays.by_station %}
+        <tr>
+          <td>{{ item.station_code }}</td>
+          <td>{{ item.average_delay_seconds|floatformat:0 }}</td>
+          <td>{{ item.sample_count }}</td>
+        </tr>
+      {% empty %}
+        <tr><td colspan="3">No measured delays by station.</td></tr>
+      {% endfor %}
+    </tbody>
+  </table>
+</body>
+</html>

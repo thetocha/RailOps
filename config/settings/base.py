@@ -33,6 +33,7 @@ INSTALLED_APPS = [
     "apps.timetables.apps.TimetablesConfig",
     "apps.integrations.apps.IntegrationsConfig",
     "apps.analytics.apps.AnalyticsConfig",
+    "apps.reports.apps.ReportsConfig",
 ]
 
 MIDDLEWARE = [
