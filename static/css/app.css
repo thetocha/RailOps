@@ -39,3 +39,15 @@ div.form-check-input {
   float: none;
   padding: 0;
 }
+
+.railops-map {
+  min-height: 16rem;
+  height: 20rem;
+  z-index: 1;
+}
+
+@media (min-width: 768px) {
+  .railops-map {
+    height: 24rem;
+  }
+}

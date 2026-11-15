@@ -1,6 +1,6 @@
 # ADR-004: Server-rendered frontend
 
-**Status:** Accepted (Phase 0)  
+**Status:** Implemented (Phase 8)  
 **Date:** 2026-11-09
 
 ## Context

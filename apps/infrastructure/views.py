@@ -93,10 +93,23 @@ class StationListView(ViewStationRequiredMixin, View):
 class StationDetailView(ViewStationRequiredMixin, View):
     def get(self, request: HttpRequest, pk: UUID) -> HttpResponse:
         station = get_object_or_404(Station, pk=pk)
+        marker = {
+            "id": str(station.pk),
+            "name": station.name,
+            "code": station.code,
+            "city": station.city,
+            "latitude": station.latitude,
+            "longitude": station.longitude,
+            "url": request.path,
+        }
         return render(
             request,
             "infrastructure/station_detail.html",
-            {"station": station, "lines": lines_for_station(station)},
+            {
+                "station": station,
+                "lines": lines_for_station(station),
+                "station_markers": [marker],
+            },
         )
 
 
