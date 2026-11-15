@@ -1,0 +1,11 @@
+{% extends "base.html" %}
+{% block title %}Deactivate {{ station.name }} — RailOps{% endblock %}
+{% block content %}
+  <h1 class="h3 mb-3">Deactivate station</h1>
+  <p>Deactivate <strong>{{ station.name }} ({{ station.code }})</strong>? The station is not deleted. Railway lines that use it stay in place.</p>
+  <form method="post">
+    {% csrf_token %}
+    <button type="submit" class="btn btn-danger">Deactivate</button>
+    <a class="btn btn-outline-secondary" href="{% url 'station_detail' station.pk %}">Cancel</a>
+  </form>
+{% endblock %}

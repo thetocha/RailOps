@@ -1,6 +1,6 @@
 # Development guide
 
-**Status:** Phase 2. Commands below were run on 2026-11-09.
+**Status:** Phase 3. Commands below were run on 2026-11-15.
 
 ## Prerequisites
 
@@ -63,7 +63,7 @@ Optionally attach that superuser to the Administrator group (so the Users UI sho
 docker compose exec app python manage.py seed_role_groups --assign-superusers
 ```
 
-`seed_role_groups` is idempotent and safe to re-run. It is the source of truth for the three role groups: re-running it restores the `accounts.user` permission catalog if someone edited those group permissions. Groups are also created automatically after migrate. The command only adds/removes permissions on `accounts.user`; later apps can attach their own permissions to the same groups.
+`seed_role_groups` is idempotent and safe to re-run. It is the source of truth for the three role groups: re-running it restores the `accounts.user` permission catalog if someone edited those group permissions. Groups are also created automatically after migrate. The command only adds/removes permissions on `accounts.user`. The infrastructure app attaches station and railway-line model permissions to the same groups in its own `post_migrate` handler (`ensure_infrastructure_permissions`). Administrators can create, update, and deactivate stations and lines; dispatchers and viewers can only view them. There is no HTML delete action — prefer deactivation. Django admin remains superuser-only.
 
 Django admin user and group CRUD is **superuser-only**. Role-based Administrators (`accounts.manage_users`) use `/accounts/users/`, not `/admin/`. They are not granted `is_staff`.
 
@@ -94,7 +94,7 @@ Host (no GDAL required):
 ```powershell
 uv run ruff check .
 uv run ruff format --check .
-uv run bandit -r apps config scripts -x tests,apps/accounts/tests
+uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests
 uv run pip-audit
 ```
 

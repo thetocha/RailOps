@@ -1,0 +1,45 @@
+{% extends "base.html" %}
+{% block title %}{{ station.name }} — RailOps{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">{{ station.name }}</h1>
+    <div class="d-flex flex-wrap gap-2">
+      {% if perms.infrastructure.change_station %}
+        <a class="btn btn-primary" href="{% url 'station_update' station.pk %}">Edit</a>
+        {% if station.is_active %}
+          <a class="btn btn-outline-danger" href="{% url 'station_deactivate' station.pk %}">Deactivate</a>
+        {% endif %}
+      {% endif %}
+      <a class="btn btn-outline-secondary" href="{% url 'station_list' %}">Back to stations</a>
+    </div>
+  </div>
+  <div class="card shadow-sm mb-4">
+    <div class="card-body">
+      <dl class="row mb-0">
+        <dt class="col-sm-3">Code</dt>
+        <dd class="col-sm-9">{{ station.code }}</dd>
+        <dt class="col-sm-3">City</dt>
+        <dd class="col-sm-9">{{ station.city }}</dd>
+        <dt class="col-sm-3">Status</dt>
+        <dd class="col-sm-9">{% if station.is_active %}Active{% else %}Inactive{% endif %}</dd>
+        <dt class="col-sm-3">Latitude</dt>
+        <dd class="col-sm-9">{{ station.latitude|floatformat:6 }}</dd>
+        <dt class="col-sm-3">Longitude</dt>
+        <dd class="col-sm-9">{{ station.longitude|floatformat:6 }}</dd>
+      </dl>
+    </div>
+  </div>
+  <h2 class="h5">Railway lines</h2>
+  {% if lines %}
+    <ul class="list-group shadow-sm">
+      {% for line in lines %}
+        <li class="list-group-item d-flex justify-content-between">
+          <a href="{% url 'railway_line_detail' line.pk %}">{{ line.name }} ({{ line.code }})</a>
+          <span class="text-muted">{% if line.is_active %}Active{% else %}Inactive{% endif %}</span>
+        </li>
+      {% endfor %}
+    </ul>
+  {% else %}
+    <p class="text-muted">No railway lines start or end at this station.</p>
+  {% endif %}
+{% endblock %}

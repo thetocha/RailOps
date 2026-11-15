@@ -28,6 +28,7 @@ INSTALLED_APPS = [
     "django.contrib.staticfiles",
     "django.contrib.gis",
     "apps.accounts.apps.AccountsConfig",
+    "apps.infrastructure.apps.InfrastructureConfig",
 ]
 
 MIDDLEWARE = [

@@ -1,7 +1,7 @@
 # Implementation status
 
-**Updated:** 2026-11-09  
-**Current phase:** Phase 2 complete (Bugbot follow-up applied). Phases 3–12 not started.
+**Updated:** 2026-11-15  
+**Current phase:** Phase 3 complete. Phases 4–12 not started.
 
 ## Phase 1 — Project foundation
 
@@ -92,10 +92,9 @@
 | `docker compose exec … app pytest` | **63 passed** |
 | `docker compose exec … app mypy` | Success: no issues found in 48 source files |
 
-**Remaining limitations:**
+**Remaining limitations (after Phase 2):**
 
-- Stations, lines, incidents, DRF, analytics, PDF, and map UI are **not** implemented (Phase 3+).
-- `accounts.view_operations` / `accounts.change_operations` exist for later apps; there are no operational records yet.
+- Incidents, DRF, analytics, PDF, and map UI are **not** implemented (Phase 4+).
 - Password-reset email in development is printed to the app container log (console backend). SMTP is configured only in production settings.
 - Login UI uses Bootstrap 5 from a CDN. Full dashboard chrome is Phase 8.
 - Rate limiting is not implemented.
@@ -118,14 +117,70 @@
 | Passwords hashed, never plaintext | **Implemented and tested** |
 | CSRF on POSTs | **Implemented and tested** |
 
-## Phases 3–12 — not started
+## Phase 3 — Railway infrastructure
+
+**Objective:** Station and RailwayLine models, migrations, forms, CRUD views with search/filter/pagination, spatial index, role-based access.
+
+**Files affected (created or updated):**
+
+- `apps/infrastructure/` — models, services, selectors, forms, views, permissions, admin, tests
+- `apps/infrastructure/migrations/0001_initial_station_and_railway_line.py`
+- `apps/accounts/forms.py` — `apply_bootstrap` shared with infrastructure forms
+- `apps/accounts/http.py` — pagination query-string helper
+- `apps/accounts/views.py` — user list passes `querystring` into the shared pager
+- `config/settings/base.py`, `config/urls.py`
+- `templates/base.html`, `templates/dashboard/home.html`, `templates/components/pagination.html`
+- `templates/infrastructure/`
+- `docs/`, `README.md`, `.github/workflows/ci.yml`, `pyproject.toml`
+
+**Implementation details:**
+
+- `Station` and `RailwayLine` use UUID primary keys, unique codes, `PROTECT` on station FKs, and GeoDjango fields (SRID 4326, `geography=True`). Spatial index is the default GIST index on `Station.location`.
+- Geometry on a railway line is optional and never inferred from station coordinates.
+- Writes go through services (`create_station`, `update_station`, `deactivate_station`, and the line equivalents). There is no HTML delete path.
+- Station codes are normalised to uppercase. Latitude/longitude are validated before constructing a `Point`.
+- Permissions: Administrator gets `view/add/change` for both models. Dispatcher and Viewer get `view` only. `delete_*` is not granted. Seeded by infrastructure `post_migrate`.
+- List pages support search, active/inactive/all filter, and pagination (20 per page).
+
+**Tests added or updated:**
+
+- Unique codes, empty-code check constraints, timestamps, `__str__`, geography field metadata, GIST index presence
+- `PROTECT` prevents deleting a station used as a line endpoint
+- Viewer/dispatcher 403 on create/update/deactivate; administrator happy path
+- Direct `add_station` permission (without Administrator group) can open create
+- CSRF POST without token → 403
+- Form coordinate and duplicate-code validation
+- Search, status filter, and pagination
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 71 source files |
+| `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests` | No issues identified |
+| `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
+| `uv run pytest` | **101 passed** |
+
+## Acceptance criteria (Phase 3)
+
+| Criterion | Status |
+|---|---|
+| Stations can be created, updated and deactivated | **Implemented and tested** |
+| Railway lines can be managed | **Implemented and tested** |
+| Unique station codes are enforced | **Implemented and tested** |
+| Geographic coordinates are persisted | **Implemented and tested** |
+| Users see only functionality permitted by their role | **Implemented and tested** |
+| Spatial index present | **Implemented and tested** |
+
+## Phases 4–12 — not started
 
 | Phase | Name | Status |
 |---|---|---|
 | 0 | Inspection and planning | Complete |
 | 1 | Project foundation | **Complete** |
 | 2 | Authentication and permissions | **Complete** |
-| 3 | Railway infrastructure | Not started |
+| 3 | Railway infrastructure | **Complete** |
 | 4 | Incident management | Not started |
 | 5 | Timetable and external integration | Not started |
 | 6 | REST API | Not started |

@@ -1,6 +1,6 @@
 # RailOps database design (initial)
 
-**Status:** Phase 0 logical model. No migrations until Phase 1 (user) and later phases (domain apps).  
+**Status:** Phase 1–3 physical model. User, Station, and RailwayLine have migrations. Incident and timetable entities remain logical until their phases.  
 **Database:** PostgreSQL with PostGIS. SQLite is **not** an integration-test substitute.
 
 ## 1. Conventions
