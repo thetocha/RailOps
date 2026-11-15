@@ -79,6 +79,6 @@
     </div>
     {% include "components/pagination.html" %}
   {% else %}
-    <p class="text-muted">No incidents match this filter.</p>
+    {% include "components/empty_state.html" with message="No incidents match this filter." %}
   {% endif %}
 {% endblock %}

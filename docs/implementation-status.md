@@ -1,7 +1,7 @@
 # Implementation status
 
 **Updated:** 2026-11-15  
-**Current phase:** Phase 7 analytics complete on this branch. REST API remains Phase 6 (separate PR). PDF reports remain Phase 9.
+**Current phase:** Phase 8 dashboard and frontend complete on this branch. REST API remains Phase 6 (separate PR). PDF reports remain Phase 9.
 
 ## Phase 1 — Project foundation
 
@@ -321,6 +321,56 @@
 |---|---|
 | Medium — any GET query string bound the period form | Bind `AnalyticsPeriodForm` only when `period_start` or `period_end` is present. Unrelated params (e.g. `utm_source`) still load the default 30-day overview. |
 
+## Phase 8 — Dashboard and frontend
+
+**Objective:** Server-rendered operations dashboard with live metrics, Chart.js visualisations, a Leaflet station map, reusable empty states, and navigation that reflects the current page. Core numbers and lists remain in HTML without JavaScript.
+
+**Files affected (created or updated):**
+
+- `apps/analytics/dashboard.py` — dashboard snapshot from analytics, incidents, services, and stations
+- `apps/accounts/views.py` — dashboard context
+- `apps/infrastructure/views.py` — station detail map payload
+- `templates/dashboard/home.html`, `templates/base.html`, `templates/infrastructure/station_detail.html`
+- `templates/components/empty_state.html`
+- `static/js/dashboard-charts.js`, `static/js/station-map.js`, `static/css/app.css`
+- List templates for incidents, stations, lines, and train services
+- `apps/accounts/tests/test_dashboard.py`
+
+**Implementation details:**
+
+- Metric cards: total incidents, open, critical, average resolution, delayed services. Source is `build_overview()` for the default 30-day window.
+- Severity and monthly trend tables are always rendered; Chart.js canvases enhance them when JS is available.
+- Station map uses persisted `PointField` coordinates. OSM tiles are labelled demonstration-only.
+- Recent incidents and recently imported train services are HTML tables with links.
+- Map markers are bounded to 200 active stations.
+
+**Tests added or updated:**
+
+- Empty dashboard shows zeros and empty-state copy
+- Persisted incident, delay, and station records appear in metrics, lists, and map JSON
+- Station detail includes map payload and coordinates without requiring JS
+- Severity table remains when Chart.js canvas is present
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 156 source files |
+| `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests` | No issues identified |
+| `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
+| `uv run pytest` | **181 passed** |
+
+## Acceptance criteria (Phase 8)
+
+| Criterion | Status |
+|---|---|
+| Main workflows work through the browser | **Implemented and tested** (existing CRUD plus dashboard) |
+| Dashboard metrics are dynamic | **Implemented and tested** |
+| The map displays persisted station data | **Implemented and tested** |
+| The interface is usable on desktop and mobile | **Implemented** (Bootstrap responsive layout; map/charts enhance) |
+| No important operation depends solely on JavaScript | **Implemented and tested** |
+
 ## Remaining phases
 
 | Phase | Name | Status |
@@ -332,8 +382,8 @@
 | 4 | Incident management | **Complete** |
 | 5 | Timetable and external integration | **Complete** |
 | 6 | REST API | Not started |
-| 7 | Analytics | **Complete** (this branch; required for Phases 8 and 9) |
-| 8 | Dashboard and frontend | Not started |
+| 7 | Analytics | **Complete** |
+| 8 | Dashboard and frontend | **Complete** (this branch; not required for Phase 9) |
 | 9 | PDF reporting | Not started |
 | 10 | Geospatial queries and map | Not started |
 | 11 | Production readiness | Not started |

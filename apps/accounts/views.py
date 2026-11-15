@@ -42,6 +42,7 @@ from apps.accounts.permissions import (
 )
 from apps.accounts.selectors import user_directory
 from apps.accounts.services import create_user, deactivate_user, update_user
+from apps.analytics.dashboard import build_dashboard
 
 USERS_PER_PAGE = 20
 
@@ -94,7 +95,15 @@ class DashboardView(DashboardAccessMixin, TemplateView):
     def get_context_data(self, **kwargs: Any) -> dict[str, Any]:
         context = super().get_context_data(**kwargs)
         user = require_authenticated_user(self.request.user)
+        snapshot = build_dashboard()
         context["role_names"] = list(user.groups.order_by("name").values_list("name", flat=True))
+        context["overview"] = snapshot.overview
+        context["critical_incidents"] = snapshot.critical_incidents
+        context["recent_incidents"] = snapshot.recent_incidents
+        context["recent_services"] = snapshot.recent_services
+        context["station_markers"] = list(snapshot.station_markers)
+        context["severity_chart"] = snapshot.severity_chart.as_json()
+        context["trend_chart"] = snapshot.trend_chart.as_json()
         return context
 
 

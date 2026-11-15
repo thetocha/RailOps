@@ -1,5 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ station.name }} — RailOps{% endblock %}
+{% block extra_css %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" integrity="sha256-p4NxAoJBhIIN+hmNHrzRCf9tD/miZyoHS5obTRR9BMY=" crossorigin="">
+{% endblock %}
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0">{{ station.name }}</h1>
@@ -29,6 +33,12 @@
       </dl>
     </div>
   </div>
+  <h2 class="h5">Map</h2>
+  <div id="station-map" class="railops-map mb-2" role="region" aria-label="Station location"></div>
+  {{ station_markers|json_script:"station-map-data" }}
+  <p class="small text-muted mb-4">
+    Map tiles: OpenStreetMap, for demonstration only. Coordinates remain listed above without JavaScript.
+  </p>
   <h2 class="h5">Railway lines</h2>
   {% if lines %}
     <ul class="list-group shadow-sm">
@@ -40,6 +50,10 @@
       {% endfor %}
     </ul>
   {% else %}
-    <p class="text-muted">No railway lines start or end at this station.</p>
+    {% include "components/empty_state.html" with message="No railway lines start or end at this station." %}
   {% endif %}
+{% endblock %}
+{% block extra_js %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" integrity="sha256-20nQCchB9co0qIjJZRGuk2/Z9VM+kNiyxNV1lvTlZBo=" crossorigin=""></script>
+  <script src="{% static 'js/station-map.js' %}"></script>
 {% endblock %}

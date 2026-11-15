@@ -1,6 +1,6 @@
 # RailOps architecture
 
-**Status:** Phase 1–5 and Phase 7 exist (Django project, PostGIS, custom user, session auth, role groups, stations, railway lines, incident lifecycle, timetable import, Pandas analytics). REST API, PDF reports, and map UI remain later phases.
+**Status:** Phase 1–5, 7, and 8 exist (Django project, PostGIS, custom user, session auth, role groups, stations, railway lines, incident lifecycle, timetable import, Pandas analytics, dashboard with Chart.js and Leaflet). REST API and PDF reports remain later phases.
 **Date:** 2026-11-15  
 **Audience:** Developers inheriting this repository.
 

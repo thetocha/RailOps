@@ -84,7 +84,7 @@ Open (port **8001** on this workstation):
 http://127.0.0.1:8001/accounts/login/
 ```
 
-After login you land on `/` (dashboard). **Analytics** (`/analytics/`) shows incident and delay metrics for a bounded date range (default 30 days, maximum 366). Administrators see **Users** (`/accounts/users/`) — list, create, edit, deactivate, assign role groups. Dispatchers and viewers can change their own password but receive HTTP 403 on user management.
+After login you land on `/` (dashboard) with live incident/delay cards, recent lists, Chart.js charts, and a Leaflet station map. **Analytics** (`/analytics/`) shows incident and delay metrics for a bounded date range (default 30 days, maximum 366). Administrators see **Users** (`/accounts/users/`) — list, create, edit, deactivate, assign role groups. Dispatchers and viewers can change their own password but receive HTTP 403 on user management.
 
 Password reset: `/accounts/password-reset/`. In development the email is printed to the **app container log** (`docker compose logs app`). Production settings send via SMTP (`MAILERS` + `EMAIL_HOST*` env vars in `.env.example`). Django 6 uses `MAILERS` only — do not also set `EMAIL_BACKEND` as a Django setting.
 
