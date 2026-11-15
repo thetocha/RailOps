@@ -29,7 +29,7 @@ def test_login_required_middleware_follows_authentication() -> None:
     middleware = list(settings.MIDDLEWARE)
     auth = "django.contrib.auth.middleware.AuthenticationMiddleware"
     active = "apps.accounts.middleware.ActiveUserSessionMiddleware"
-    login = "django.contrib.auth.middleware.LoginRequiredMiddleware"
+    login = "apps.accounts.middleware.LoginRequiredMiddleware"
     assert middleware.index(active) == middleware.index(auth) + 1
     assert middleware.index(login) == middleware.index(active) + 1
 

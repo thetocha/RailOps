@@ -1,7 +1,7 @@
 # Implementation status
 
 **Updated:** 2026-11-15  
-**Current phase:** Phase 4 and Phase 5 complete on `main`. Phases 6–12 not started.
+**Current phase:** Phase 6 REST API complete on this branch. Analytics and reports APIs remain Phase 7 and Phase 9.
 
 ## Phase 1 — Project foundation
 
@@ -264,6 +264,60 @@
 | Synchronization results are visible | **Implemented and tested** |
 | Mock provider supports deterministic local development | **Implemented and tested** |
 
+## Phase 6 — REST API
+
+**Objective:** Django REST Framework v1 for stations, incidents, and train services, with session authentication, Django model permissions, pagination, filtering, OpenAPI, and consistent JSON errors. Analytics and report endpoints are deferred.
+
+**Files affected (created or updated):**
+
+- `config/api/` — authentication (401 `WWW-Authenticate: Session`), exception handler, pagination, permission factory, router, schema/docs
+- `apps/infrastructure/api/` — `StationViewSet` list/retrieve/create/patch; lat/lon floats, no WKT
+- `apps/incidents/api/` — `IncidentViewSet` list/retrieve/create/patch plus `POST …/transition/`
+- `apps/timetables/api/` — read-only train services and nested stops
+- `apps/accounts/middleware.py` — HTML `LoginRequiredMiddleware` skips `/api/`
+- `config/settings/base.py` — DRF, django-filter, drf-spectacular
+- `config/urls.py` — `path("api/", include("config.api.urls"))`
+- `tests/integration/test_api.py` — auth, permissions, validation, pagination, CSRF, OpenAPI
+- `docs/api.md`, `docs/architecture.md`, `docs/security.md`, `README.md`, `pyproject.toml`, `uv.lock`
+
+**Implementation details:**
+
+- Base path `/api/v1/`. Schema `/api/schema/`, Swagger `/api/docs/` (authenticated).
+- Session cookie authentication only. Unauthenticated API calls return 401 JSON, not a login redirect. Missing permission is 403. CSRF applies to unsafe methods.
+- Permissions use Django model perms via `require_django_perm`, not group-name checks. Writes go through existing services (`create_station`, `create_incident`, `transition_incident`, …). Incident `status` is not writable on PATCH; use the transition action.
+- Pagination: page size 20, max 100. Station search `q`/`search`; `is_active` filter. Incident filters: status, severity, category, station. Service filters: date, origin, destination, train number.
+- Invalid payloads return 400. Unhandled exceptions return 500 with a generic body and are logged. Geographic coordinates are lat/lon floats with range validation.
+
+**Tests added or updated:**
+
+- Unauthenticated `/api/v1/stations/` and `/api/schema/` return 401 (not 302)
+- Viewer GET stations/incidents/services; POST stations 403; POST incidents 201
+- Dispatcher POST stations 403; administrator POST stations 201
+- Invalid coordinates 400; invalid incident transition 400; valid transition 200
+- Pagination of 21 stations; timetable GET 200 and POST 405
+- CSRF POST without token 403; OpenAPI schema requires authentication
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 149 source files |
+| `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests` | No issues identified |
+| `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
+| `uv run pytest` | **167 passed** |
+
+## Acceptance criteria (Phase 6)
+
+| Criterion | Status |
+|---|---|
+| Required station, incident, and timetable endpoints work | **Implemented and tested** |
+| API permissions match user roles | **Implemented and tested** |
+| Invalid requests return meaningful errors | **Implemented and tested** |
+| API documentation is available | **Implemented and tested** (authenticated OpenAPI) |
+| No database internals or stack traces are exposed | **Implemented and tested** |
+| Analytics and report endpoints | **Not in Phase 6** (Phase 7 and 9) |
+
 ## Remaining phases
 
 | Phase | Name | Status |
@@ -274,7 +328,7 @@
 | 3 | Railway infrastructure | **Complete** |
 | 4 | Incident management | **Complete** |
 | 5 | Timetable and external integration | **Complete** |
-| 6 | REST API | Not started |
+| 6 | REST API | **Complete** (this branch; not required for Phase 7) |
 | 7 | Analytics | Not started |
 | 8 | Dashboard and frontend | Not started |
 | 9 | PDF reporting | Not started |
