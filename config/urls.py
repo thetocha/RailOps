@@ -11,4 +11,5 @@ urlpatterns = [
     path("", include("apps.incidents.urls")),
     path("", include("apps.timetables.urls")),
     path("", include("apps.integrations.urls")),
+    path("", include("apps.analytics.urls")),
 ]

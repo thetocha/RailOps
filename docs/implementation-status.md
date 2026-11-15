@@ -1,7 +1,7 @@
 # Implementation status
 
 **Updated:** 2026-11-15  
-**Current phase:** Phase 4 and Phase 5 complete on `main`. Phases 6–12 not started.
+**Current phase:** Phase 7 analytics complete on this branch. REST API remains Phase 6 (separate PR). PDF reports remain Phase 9.
 
 ## Phase 1 — Project foundation
 
@@ -264,6 +264,63 @@
 | Synchronization results are visible | **Implemented and tested** |
 | Mock provider supports deterministic local development | **Implemented and tested** |
 
+## Phase 7 — Analytics
+
+**Objective:** Date-bounded incident and delay analytics with ORM reads, Pandas transformations, typed metrics, and an HTML overview. REST `/api/v1/analytics/` waits for Phase 6.
+
+**Files affected (created or updated):**
+
+- `apps/analytics/` — permission carrier, period validation, queries, Pandas metrics, services, HTML overview
+- `apps/analytics/migrations/0001_initial_operational_analytics.py` — unmanaged model for `view_operationalanalytics`
+- `templates/analytics/overview.html`, `templates/base.html`, `templates/dashboard/home.html`
+- `config/settings/base.py`, `config/urls.py`, `.github/workflows/ci.yml`, `pyproject.toml`, `uv.lock`
+- `docs/architecture.md`, `docs/security.md`, `docs/decisions/ADR-005-analytics-pandas.md`, `README.md`
+
+**Implementation details:**
+
+- Filter at the database (incident `reported_at` window, train `service_date` inclusive). Max period **366** days. Default last **30** days.
+- Pandas computes medians, monthly volume, per-station counts, and on-time percentage after the bounded fetch. ORM `COUNT` is used for total train services and optional status totals.
+- Typed dataclasses (`IncidentMetrics`, `DelayMetrics`, `OverviewMetrics`) are returned to views. Raw DataFrames stay inside `metrics.py`.
+- On-time threshold is **300 seconds**. Missing actual times are excluded from delay statistics, never treated as zero delay or as on time. Arrival delay is preferred when both arrival and departure exist.
+- Unresolved incidents are excluded from average/median resolution time. Negative or unparsable resolution intervals are ignored.
+- All three roles receive `analytics.view_operationalanalytics`. Authorization uses Django permissions, not group names.
+
+**Tests added or updated:**
+
+- Empty datasets; unresolved incidents; invalid/negative resolution timestamps
+- Delay on-time math; unmeasured services not counted on time; outlier delays; arrival preferred over departure
+- Period start after end; period longer than 366 days; half-open datetime bounds
+- Overview reads persisted rows and ignores other periods; HTML empty state; invalid GET period; 403 without permission
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 154 source files |
+| `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests` | No issues identified |
+| `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
+| `uv run pytest` | **177 passed** |
+
+## Acceptance criteria (Phase 7)
+
+| Criterion | Status |
+|---|---|
+| Analytics use real database data | **Implemented and tested** |
+| Empty datasets are handled | **Implemented and tested** |
+| Null values are handled correctly | **Implemented and tested** |
+| Delay metrics are mathematically consistent | **Implemented and tested** |
+| Expensive operations are bounded | **Implemented and tested** (max 366 days) |
+| REST analytics endpoints | **Not in this PR** (Phase 6 not merged; HTML `/analytics/` is the Phase 7 surface) |
+
+## Phase 7 follow-up — Bugbot findings
+
+**Status:** Implemented on this branch.
+
+| Finding | Fix |
+|---|---|
+| Medium — any GET query string bound the period form | Bind `AnalyticsPeriodForm` only when `period_start` or `period_end` is present. Unrelated params (e.g. `utm_source`) still load the default 30-day overview. |
+
 ## Remaining phases
 
 | Phase | Name | Status |
@@ -275,7 +332,7 @@
 | 4 | Incident management | **Complete** |
 | 5 | Timetable and external integration | **Complete** |
 | 6 | REST API | Not started |
-| 7 | Analytics | Not started |
+| 7 | Analytics | **Complete** (this branch; required for Phases 8 and 9) |
 | 8 | Dashboard and frontend | Not started |
 | 9 | PDF reporting | Not started |
 | 10 | Geospatial queries and map | Not started |
