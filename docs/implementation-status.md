@@ -423,6 +423,16 @@
 | Smoke tests pass | **CI image-smoke** |
 | Rollback procedure is documented | **Implemented** (`docs/deployment-guide.md`; not zero-downtime) |
 
+## Phase 11 follow-up — Bugbot findings
+
+**Status:** Implemented on this branch.
+
+| Finding | Fix |
+|---|---|
+| High — `python scripts/release.py` could not import `scripts.wait_for_db` | Release command is `python -m scripts.release` so `/app` is on `sys.path`. |
+| High — `workflow_dispatch` could push `:main` from a feature branch | Deploy job runs only on `refs/heads/main` or a successful CI `workflow_run` for `main`. |
+| High — Nginx always set `X-Forwarded-Proto` to `$scheme` (http) | `map` preserves an incoming `X-Forwarded-Proto` from a TLS terminator and falls back to `$scheme`. |
+
 ## Remaining phases
 
 | Phase | Name | Status |

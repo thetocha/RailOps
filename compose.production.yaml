@@ -39,7 +39,7 @@ services:
     depends_on:
       db:
         condition: service_healthy
-    command: ["python", "scripts/release.py"]
+    command: ["python", "-m", "scripts.release"]
     volumes:
       - staticfiles:/app/staticfiles
       - media:/app/media

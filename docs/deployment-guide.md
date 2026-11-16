@@ -20,7 +20,7 @@ Internet --> Nginx (static + reverse proxy) --> Gunicorn --> Django
 ## Build and run (small VPS)
 
 1. Copy `.env.example` to `.env` on the host. Replace `SECRET_KEY` and `DB_PASSWORD` with strong values. Set `ALLOWED_HOSTS` and `CSRF_TRUSTED_ORIGINS` to the public hostname (`https://...`). Production settings refuse `DEBUG=True`, placeholder secrets, empty hosts, and `*`.
-2. Set `SECURE_SSL_REDIRECT=True` when TLS terminates in front of Nginx (or on Nginx itself). Leave it `False` only for an HTTP-only lab.
+2. Set `SECURE_SSL_REDIRECT=True` when TLS terminates in front of Nginx (or on Nginx itself). Leave it `False` only for an HTTP-only lab. Nginx copies an incoming `X-Forwarded-Proto` header when present so Django `SECURE_PROXY_SSL_HEADER` sees `https` behind a TLS terminator; it falls back to `$scheme` when the header is absent.
 3. Build and start:
 
 ```bash

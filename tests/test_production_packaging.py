@@ -22,7 +22,7 @@ def test_dockerfile_is_multi_stage_non_root_gunicorn() -> None:
 
 def test_production_compose_keeps_migrate_off_workers() -> None:
     compose = (ROOT / "compose.production.yaml").read_text(encoding="utf-8")
-    assert "scripts/release.py" in compose
+    assert '["python", "-m", "scripts.release"]' in compose
     assert "config/gunicorn.conf.py" in compose
     assert "runserver" not in compose
     assert "nginx:1.28.0-alpine" in compose
@@ -36,7 +36,8 @@ def test_nginx_does_not_serve_media_or_enable_autoindex() -> None:
     assert "location /static/" in nginx
     assert "location /health/" in nginx
     assert "location /media/" not in nginx
-    assert "proxy_set_header X-Forwarded-Proto $scheme" in nginx
+    assert "proxy_set_header X-Forwarded-Proto $forwarded_proto" in nginx
+    assert "map $http_x_forwarded_proto $forwarded_proto" in nginx
     assert "client_max_body_size 2m" in nginx
 
 
@@ -62,6 +63,7 @@ def test_deploy_workflow_does_not_migrate_on_app_start() -> None:
     assert "gunicorn --check-config" in workflow
     assert "manage.py migrate" not in workflow
     assert "does not connect to a VPS" in workflow
+    assert "github.ref == 'refs/heads/main'" in workflow
 
 
 def test_env_example_documents_production_runtime_knobs() -> None:
