@@ -70,7 +70,7 @@ Must exist **before** the first migration.
 
 **Delete:** `PROTECT` from incidents, scheduled stops, and as start/end of a railway line. Deactivate instead.
 
-**Spatial queries:** `dwithin` for radius; distance order for nearest.
+**Spatial queries:** GeoDjango `location__dwithin` (`ST_DWithin`) for radius search; `Distance()` (`ST_Distance`) for nearest and ordered nearby results. Geography (metres) with SRID 4326. Application code must not substitute a haversine formula. Nearby radius is 1–500_000 m (default 50_000 m). Results are capped (50 nearby stations; 200 map stations / incidents). Incident radius queries filter through `station__location`.
 
 ### 3.3 RailwayLine
 

@@ -1,0 +1,77 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Nearby stations — RailOps{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Nearby stations</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'operations_map' %}">Operations map</a>
+  </div>
+  <p class="text-muted">
+    Distances use PostGIS geography (metres, SRID 4326). The search does not approximate coordinates in the application.
+  </p>
+  <form method="get" class="card card-body shadow-sm mb-4">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label" for="id_latitude">Latitude</label>
+        {{ form.latitude }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="id_longitude">Longitude</label>
+        {{ form.longitude }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="id_radius_meters">Radius (metres)</label>
+        {{ form.radius_meters }}
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Search</button>
+      </div>
+    </div>
+    {% if form.errors %}
+      <div class="alert alert-danger mt-3 mb-0" role="alert">
+        {{ form.non_field_errors }}
+        {{ form.latitude.errors }}
+        {{ form.longitude.errors }}
+        {{ form.radius_meters.errors }}
+      </div>
+    {% endif %}
+  </form>
+  {% if form.is_bound and form.is_valid %}
+    {% if results %}
+      <div class="table-responsive card shadow-sm mb-4">
+        <table class="table table-striped mb-0">
+          <thead>
+            <tr>
+              <th scope="col">Station</th>
+              <th scope="col">City</th>
+              <th scope="col">Distance</th>
+            </tr>
+          </thead>
+          <tbody>
+            {% for item in results %}
+              <tr>
+                <td><a href="{% url 'station_detail' item.station.pk %}">{{ item.station.name }} ({{ item.station.code }})</a></td>
+                <td>{{ item.station.city }}</td>
+                <td>{{ item.distance_label }}</td>
+              </tr>
+            {% endfor %}
+          </tbody>
+        </table>
+      </div>
+    {% else %}
+      <p class="text-muted">No active stations within that radius.</p>
+    {% endif %}
+    {{ map_payload|json_script:"operations-map-data" }}
+    <div id="operations-map" class="railops-map rounded shadow-sm" role="img" aria-label="Nearby stations map"></div>
+    <p class="small text-muted mt-2">OpenStreetMap tiles are for local demonstration only.</p>
+  {% else %}
+    <p class="text-muted">Enter coordinates to find stations within a radius. Results are limited to 50 stations.</p>
+  {% endif %}
+{% endblock %}
+{% block extra_js %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{% static 'js/operations-map.js' %}"></script>
+{% endblock %}

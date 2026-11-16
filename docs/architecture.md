@@ -1,6 +1,6 @@
 # RailOps architecture
 
-**Status:** Phase 1–5 and Phase 7 exist (Django project, PostGIS, custom user, session auth, role groups, stations, railway lines, incident lifecycle, timetable import, Pandas analytics). REST API, PDF reports, and map UI remain later phases.
+**Status:** Phase 1–5, 7, and 10 exist (Django project, PostGIS, custom user, session auth, role groups, stations, railway lines, incident lifecycle, timetable import, Pandas analytics, spatial queries and operations map). REST API, dashboard chrome, and PDF reports remain later phases.
 **Date:** 2026-11-15  
 **Audience:** Developers inheriting this repository.
 
@@ -161,7 +161,23 @@ See [ADR-006](decisions/ADR-006-pdf-generation.md).
 
 ## 10. Geospatial
 
-GeoDjango + PostGIS. Station `location` is `PointField` SRID **4326**, `geography=True` where distance-in-metres is required. Spatial index via migration (GIST). Two required queries: stations within radius; nearest station. Leaflet + OSM-compatible tiles for the map; **tile usage terms must be checked before production** (public OSM tile servers are not a blank cheque). Tests use PostGIS, never SQLite.
+GeoDjango + PostGIS. Station `location` is `PointField` SRID **4326**, `geography=True`. Spatial index via migration (GIST). Distances are metres on the geography type. **Do not** replace these queries with Python haversine (or any application-side approximation) in production.
+
+Implemented queries:
+
+| Operation | Implementation |
+|---|---|
+| Stations within radius | `location__dwithin=(origin, D(m=radius))` → PostGIS `ST_DWithin`, then `Distance` order |
+| Nearest station | `Distance("location", origin)` → PostGIS `ST_Distance` |
+| Incidents within radius | `station__location__dwithin` on open / in-progress incidents at active stations |
+
+Radius is validated (1–500_000 m, default 50_000 m). Nearby results are capped at 50 stations; the unfiltered operations map is capped at 200 stations and 200 incidents.
+
+`apps/infrastructure` must not import incidents. The operations map snapshot is assembled in `apps/incidents/map.py` and rendered at `/map/`. Nearby search is `/stations/nearby/`. Station detail shows the nearest other station from PostGIS.
+
+Leaflet 1.9.4 draws markers from a `json_script` payload. Popups use DOM nodes (`textContent`), not `innerHTML`. OpenStreetMap raster tiles are labelled **demo-only**; public OSM tile servers are not a production usage agreement. Tests use PostGIS, never SQLite.
+
+Nearby and map GET forms bind only when `latitude`, `longitude`, or `radius_meters` is present so unrelated query strings do not become invalid searches.
 
 ## 11. Frontend
 

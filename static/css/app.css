@@ -26,6 +26,12 @@ fieldset legend.form-label {
 
 /* Django copies CheckboxSelectMultiple.attrs.class onto a wrapper <div>.
    Bootstrap .form-check-input is 1em square and would collapse that wrapper. */
+.railops-map {
+  height: 28rem;
+  width: 100%;
+  z-index: 0;
+}
+
 div.form-check-input {
   width: auto;
   height: auto;

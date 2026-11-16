@@ -1,5 +1,9 @@
 {% extends "base.html" %}
+{% load static %}
 {% block title %}{{ station.name }} — RailOps{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
 {% block content %}
   <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
     <h1 class="h3 mb-0">{{ station.name }}</h1>
@@ -26,9 +30,21 @@
         <dd class="col-sm-9">{{ station.latitude|floatformat:6 }}</dd>
         <dt class="col-sm-3">Longitude</dt>
         <dd class="col-sm-9">{{ station.longitude|floatformat:6 }}</dd>
+        <dt class="col-sm-3">Nearest other station</dt>
+        <dd class="col-sm-9">
+          {% if nearest %}
+            <a href="{% url 'station_detail' nearest.station.pk %}">{{ nearest.station.name }}</a>
+            ({{ nearest_distance }})
+          {% else %}
+            None
+          {% endif %}
+        </dd>
       </dl>
     </div>
   </div>
+  {{ station_marker|json_script:"station-point" }}
+  <div id="station-point-map" class="railops-map rounded shadow-sm mb-4" role="img" aria-label="Station location"></div>
+  <p class="small text-muted">OpenStreetMap tiles are for local demonstration only.</p>
   <h2 class="h5">Railway lines</h2>
   {% if lines %}
     <ul class="list-group shadow-sm">
@@ -42,4 +58,26 @@
   {% else %}
     <p class="text-muted">No railway lines start or end at this station.</p>
   {% endif %}
+{% endblock %}
+{% block extra_js %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script>
+    (function () {
+      var node = document.getElementById("station-point");
+      var mapEl = document.getElementById("station-point-map");
+      if (!node || !mapEl || typeof L === "undefined") { return; }
+      var station;
+      try { station = JSON.parse(node.textContent); } catch (error) { return; }
+      var latlng = [station.latitude, station.longitude];
+      var map = L.map(mapEl).setView(latlng, 13);
+      L.tileLayer("https://tile.openstreetmap.org/{z}/{x}/{y}.png", {
+        maxZoom: 18,
+        attribution: "&copy; OpenStreetMap (demo tiles; not a production usage agreement)"
+      }).addTo(map);
+      var marker = L.marker(latlng).addTo(map);
+      var label = document.createElement("span");
+      label.textContent = station.name + " (" + station.code + ")";
+      marker.bindPopup(label);
+    })();
+  </script>
 {% endblock %}
