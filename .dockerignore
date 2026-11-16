@@ -16,3 +16,9 @@ docs
 AGENTS.md
 .idea
 .vscode
+tests
+**/tests
+backups
+deploy
+compose.yaml
+compose.production.yaml

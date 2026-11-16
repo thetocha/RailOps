@@ -99,8 +99,10 @@ def test_production_module_uses_secure_defaults() -> None:
 
 def test_dockerfile_defaults_to_production_settings() -> None:
     dockerfile = (Path(__file__).resolve().parents[1] / "Dockerfile").read_text(encoding="utf-8")
-    assert "DJANGO_SETTINGS_MODULE=config.settings.production" in dockerfile
+    assert "ENV" in dockerfile and "DJANGO_SETTINGS_MODULE=config.settings.production" in dockerfile
     assert "DJANGO_SETTINGS_MODULE=config.settings.development" not in dockerfile
+    assert "USER railops" in dockerfile
+    assert 'CMD ["gunicorn"' in dockerfile
 
 
 def test_compose_overrides_development_settings() -> None:

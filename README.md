@@ -1,6 +1,6 @@
 # RailOps
 
-Internal railway operations and analytics platform. This repository currently contains **Phases 1–5, 7, and 10**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD, incident lifecycle with immutable history, mock/CSV/HTTP timetable import, delay tracking, Pandas operational analytics, nearby/nearest spatial queries, operations map, quality tooling, Docker Compose, and CI.
+Internal railway operations and analytics platform. This repository currently contains **Phases 1–5, 7, 10, and 11**: Django project layout, custom user model, PostGIS, health endpoint, session login/logout, password change/reset, role groups, administrator user management, station and railway-line CRUD, incident lifecycle with immutable history, mock/CSV/HTTP timetable import, delay tracking, Pandas operational analytics, nearby/nearest spatial queries, operations map, production image (Gunicorn, Nginx, dedicated migrate step), quality tooling, Docker Compose, and CI.
 
 REST API (Phase 6), dashboard chrome/charts (Phase 8), and PDF reports (Phase 9) remain later phases.
 
@@ -107,4 +107,4 @@ docker compose exec app python manage.py sync_timetables --provider mock
 - No REST API or PDF reports yet (Phase 6 / 9). Dashboard chrome and Chart.js remain Phase 8. Geospatial HTML is at `/map/` and `/stations/nearby/` (PostGIS `ST_DWithin` / `ST_Distance`; OSM tiles are demo-only). Analytics HTML is at `/analytics/` (on-time threshold 300 seconds; missing actuals excluded). REST `/api/v1/analytics/` waits for Phase 6.
 - The HTTP provider is a licensed JSON endpoint using the RailOps schema, not a national railway API. CI uses mock/CSV only.
 - Native Windows GDAL/GEOS is not installed; GeoDjango runs in Linux containers and CI.
-- Production Dockerfile hardening (non-root image split, Nginx, Gunicorn process model) is Phase 11; the Phase 1 image is enough to run the app and tests.
+- Production run path is `compose.production.yaml` (Nginx + Gunicorn + `scripts/release.py`). Local `compose.yaml` still uses runserver. See `docs/deployment-guide.md`. There is no automated VPS SSH deploy.

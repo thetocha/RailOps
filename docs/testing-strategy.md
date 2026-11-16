@@ -1,6 +1,6 @@
 # Testing strategy
 
-**Status:** Phase 10. Foundation, auth, infrastructure, incident, delay calculation, timetable-sync, analytics, and PostGIS spatial tests exist.
+**Status:** Phase 11. Foundation, auth, infrastructure, incident, delay calculation, timetable-sync, analytics, PostGIS spatial, and production packaging tests exist.
 
 ## Stack
 

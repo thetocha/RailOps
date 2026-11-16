@@ -1,11 +1,26 @@
-FROM python:3.13.14-slim-bookworm
+# syntax=docker/dockerfile:1.7
+
+FROM python:3.13.14-slim-bookworm AS builder
 
 ENV PYTHONDONTWRITEBYTECODE=1 \
     PYTHONUNBUFFERED=1 \
     UV_COMPILE_BYTECODE=1 \
     UV_LINK_MODE=copy \
     UV_PROJECT_ENVIRONMENT=/opt/venv \
-    PATH="/opt/venv/bin:/root/.local/bin:$PATH" \
+    PATH="/opt/venv/bin:/usr/local/bin:$PATH"
+
+COPY --from=ghcr.io/astral-sh/uv:0.12.7 /uv /usr/local/bin/uv
+
+WORKDIR /app
+
+COPY pyproject.toml uv.lock ./
+RUN uv sync --frozen --no-dev --no-install-project
+
+FROM python:3.13.14-slim-bookworm AS runtime
+
+ENV PYTHONDONTWRITEBYTECODE=1 \
+    PYTHONUNBUFFERED=1 \
+    PATH="/opt/venv/bin:$PATH" \
     DJANGO_SETTINGS_MODULE=config.settings.production
 
 RUN apt-get update \
@@ -16,23 +31,30 @@ RUN apt-get update \
         libgeos-dev \
         libproj-dev \
         libpq5 \
-    && rm -rf /var/lib/apt/lists/*
+    && rm -rf /var/lib/apt/lists/* \
+    && useradd --create-home --uid 1000 --shell /usr/sbin/nologin railops \
+    && mkdir -p /app/media /app/staticfiles
 
-COPY --from=ghcr.io/astral-sh/uv:0.12.7 /uv /usr/local/bin/uv
+COPY --from=builder /opt/venv /opt/venv
 
 WORKDIR /app
 
-COPY pyproject.toml uv.lock ./
-RUN uv sync --frozen --all-groups --no-install-project
+COPY --chown=railops:railops manage.py pyproject.toml uv.lock ./
+COPY --chown=railops:railops config ./config
+COPY --chown=railops:railops apps ./apps
+COPY --chown=railops:railops templates ./templates
+COPY --chown=railops:railops static ./static
+COPY --chown=railops:railops scripts ./scripts
 
-COPY . .
-
-RUN useradd --create-home --uid 1000 railops \
-    && mkdir -p /app/media /app/staticfiles \
+RUN DJANGO_SETTINGS_MODULE=config.settings.staticbuild \
+    python manage.py collectstatic --noinput \
     && chown -R railops:railops /app /opt/venv
 
 USER railops
 
 EXPOSE 8000
 
-CMD ["gunicorn", "config.wsgi:application", "--bind", "0.0.0.0:8000"]
+HEALTHCHECK --interval=30s --timeout=5s --start-period=40s --retries=3 \
+    CMD python -c "import urllib.request; urllib.request.urlopen('http://127.0.0.1:8000/health/', timeout=5)"
+
+CMD ["gunicorn", "--config", "config/gunicorn.conf.py", "config.wsgi:application"]

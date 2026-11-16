@@ -77,7 +77,7 @@ module = ["environ"]
 ignore_missing_imports = true
 
 [[tool.mypy.overrides]]
-module = ["config.settings.development", "config.settings.test", "config.settings.production"]
+module = ["config.settings.development", "config.settings.test", "config.settings.production", "config.settings.staticbuild"]
 ignore_errors = true
 
 [tool.coverage.run]
