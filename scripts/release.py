@@ -10,6 +10,7 @@ import os
 
 import django
 from django.core.management import call_command
+
 from scripts.wait_for_db import main as wait_for_database
 
 logger = logging.getLogger(__name__)

@@ -60,7 +60,7 @@ select = [
 "**/tests/**" = ["S101", "S105", "S106"]
 
 [tool.ruff.lint.isort]
-known-first-party = ["apps", "config"]
+known-first-party = ["apps", "config", "scripts"]
 
 [tool.mypy]
 python_version = "3.13"
