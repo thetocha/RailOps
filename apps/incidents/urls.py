@@ -1,8 +1,9 @@
 from django.urls import path
 
-from apps.incidents import views
+from apps.incidents import map_views, views
 
 urlpatterns = [
+    path("map/", map_views.OperationsMapView.as_view(), name="operations_map"),
     path("incidents/", views.IncidentListView.as_view(), name="incident_list"),
     path("incidents/create/", views.IncidentCreateView.as_view(), name="incident_create"),
     path("incidents/<uuid:pk>/", views.IncidentDetailView.as_view(), name="incident_detail"),

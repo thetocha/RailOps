@@ -4,6 +4,7 @@ from apps.infrastructure import views
 
 urlpatterns = [
     path("stations/", views.StationListView.as_view(), name="station_list"),
+    path("stations/nearby/", views.NearbyStationsView.as_view(), name="station_nearby"),
     path("stations/create/", views.StationCreateView.as_view(), name="station_create"),
     path("stations/<uuid:pk>/", views.StationDetailView.as_view(), name="station_detail"),
     path("stations/<uuid:pk>/edit/", views.StationUpdateView.as_view(), name="station_update"),

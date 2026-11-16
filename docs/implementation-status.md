@@ -1,7 +1,7 @@
 # Implementation status
 
-**Updated:** 2026-11-15  
-**Current phase:** Phase 7 analytics complete on this branch. REST API remains Phase 6 (separate PR). PDF reports remain Phase 9.
+**Updated:** 2026-11-16  
+**Current phase:** Phase 10 geospatial complete on this branch. REST API remains Phase 6 (separate PR). Dashboard chrome remains Phase 8. PDF reports remain Phase 9.
 
 ## Phase 1 — Project foundation
 
@@ -321,6 +321,63 @@
 |---|---|
 | Medium — any GET query string bound the period form | Bind `AnalyticsPeriodForm` only when `period_start` or `period_end` is present. Unrelated params (e.g. `utm_source`) still load the default 30-day overview. |
 
+## Phase 10 — Geospatial functionality
+
+**Objective:** PostGIS nearby and nearest station queries, incident radius filtering, operations map with Leaflet, spatial tests, and documentation. Do not mix unmerged dashboard (Phase 8) or PDF (Phase 9) work.
+
+**Files affected (created or updated):**
+
+- `apps/infrastructure/spatial.py` — `ST_DWithin` / `ST_Distance`, radius validation, distance labels
+- `apps/infrastructure/forms.py` — `NearbySearchForm`
+- `apps/infrastructure/views.py` — nearby search, station detail nearest + marker payload
+- `apps/infrastructure/urls.py` — `/stations/nearby/`
+- `apps/incidents/spatial.py` — incidents within radius, active map incidents
+- `apps/incidents/map.py` — operations map snapshot (infrastructure does not import incidents)
+- `apps/incidents/map_views.py` — `/map/`
+- `apps/incidents/urls.py`
+- `templates/base.html`, `templates/infrastructure/`, `templates/incidents/operations_map.html`
+- `static/js/operations-map.js`, `static/css/app.css`
+- `apps/infrastructure/tests/test_spatial.py`, `test_nearby_views.py`
+- `apps/incidents/tests/test_spatial.py`, `test_map_views.py`
+- `docs/`, `README.md`
+
+**Implementation details:**
+
+- Station `location` remains geography SRID 4326 with the Phase 3 GIST index. Nearby uses `location__dwithin=(origin, D(m=radius))`. Nearest uses `Distance()`. Application code does not compute haversine.
+- Radius 1–500_000 m (default 50_000). Nearby capped at 50 stations. Unfiltered map capped at 200 stations and 200 open/in-progress incidents at active stations.
+- Nearby and map forms bind only when `latitude`, `longitude`, or `radius_meters` is present.
+- `/stations/nearby/` and `/map/` require `infrastructure.view_station`. Incident markers require `incidents.view_incident`.
+- Leaflet 1.9.4; OSM tiles labelled demo-only; popups use DOM `textContent`, not `innerHTML`.
+
+**Tests added or updated:**
+
+- Generated SQL contains `ST_DWithin` and `ST_Distance`
+- Berlin 50 km includes Potsdam, excludes Hamburg; inactive stations excluded
+- Nearest other station from Berlin is Potsdam; empty set returns `None`
+- Invalid radius and non-4326 origin rejected
+- Nearby HTML lists Potsdam, omits Hamburg; unrelated query string does not bind the form
+- Operations map shows incident markers; radius filter hides Hamburg; 403 without `view_station`; station-only user sees no incident markers
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 162 source files |
+| `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests` | No issues identified |
+| `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
+| `uv run python manage.py makemigrations --check --dry-run` | No changes detected |
+| `uv run pytest` | **200 passed** |
+
+## Acceptance criteria (Phase 10)
+
+| Criterion | Status |
+|---|---|
+| Spatial queries execute against PostGIS | **Implemented** (SQL assertions for `ST_DWithin` / `ST_Distance`) |
+| Coordinates are validated | **Implemented** (lat/lon bounds, radius, SRID 4326) |
+| Spatial indexes are present | **Implemented and tested** (Phase 3 GIST index) |
+| Map data comes from the database | **Implemented** (station and incident querysets, not hardcoded pins) |
+
 ## Remaining phases
 
 | Phase | Name | Status |
@@ -331,10 +388,10 @@
 | 3 | Railway infrastructure | **Complete** |
 | 4 | Incident management | **Complete** |
 | 5 | Timetable and external integration | **Complete** |
-| 6 | REST API | Not started |
-| 7 | Analytics | **Complete** (this branch; required for Phases 8 and 9) |
-| 8 | Dashboard and frontend | Not started |
-| 9 | PDF reporting | Not started |
-| 10 | Geospatial queries and map | Not started |
+| 6 | REST API | Separate unmerged PR (not this branch) |
+| 7 | Analytics | **Complete** |
+| 8 | Dashboard and frontend | Separate unmerged PR (not this branch) |
+| 9 | PDF reporting | Separate unmerged PR (not this branch) |
+| 10 | Geospatial queries and map | **Complete** (this branch) |
 | 11 | Production readiness | Not started |
 | 12 | Final verification | Not started |

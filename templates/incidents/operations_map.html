@@ -1,0 +1,59 @@
+{% extends "base.html" %}
+{% load static %}
+{% block title %}Operations map — RailOps{% endblock %}
+{% block extra_head %}
+  <link rel="stylesheet" href="https://unpkg.com/leaflet@1.9.4/dist/leaflet.css" crossorigin="">
+{% endblock %}
+{% block content %}
+  <div class="d-flex flex-wrap justify-content-between align-items-center gap-2 mb-3">
+    <h1 class="h3 mb-0">Operations map</h1>
+    <a class="btn btn-outline-secondary" href="{% url 'station_nearby' %}">Nearby stations</a>
+  </div>
+  <p class="text-muted">
+    Station pins and open incident markers come from PostGIS. Optional coordinates filter with <code>ST_DWithin</code>.
+    OpenStreetMap tiles are for local demonstration only.
+  </p>
+  <form method="get" class="card card-body shadow-sm mb-4">
+    <div class="row g-2 align-items-end">
+      <div class="col-md-3">
+        <label class="form-label" for="id_latitude">Latitude</label>
+        {{ form.latitude }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="id_longitude">Longitude</label>
+        {{ form.longitude }}
+      </div>
+      <div class="col-md-3">
+        <label class="form-label" for="id_radius_meters">Radius (metres)</label>
+        {{ form.radius_meters }}
+      </div>
+      <div class="col-auto">
+        <button type="submit" class="btn btn-primary">Filter map</button>
+      </div>
+    </div>
+    {% if form.errors %}
+      <div class="alert alert-danger mt-3 mb-0" role="alert">
+        {{ form.non_field_errors }}
+        {{ form.latitude.errors }}
+        {{ form.longitude.errors }}
+        {{ form.radius_meters.errors }}
+      </div>
+    {% endif %}
+  </form>
+  {% if snapshot %}
+    <p>
+      Showing {{ snapshot.stations|length }} station{{ snapshot.stations|length|pluralize }}
+      {% if snapshot.incidents %}
+        and {{ snapshot.incidents|length }} active incident{{ snapshot.incidents|length|pluralize }}
+      {% endif %}.
+    </p>
+    {{ map_payload|json_script:"operations-map-data" }}
+    <div id="operations-map" class="railops-map rounded shadow-sm" role="img" aria-label="Stations and incidents map"></div>
+  {% else %}
+    <p class="text-muted">Correct the coordinates to load the map.</p>
+  {% endif %}
+{% endblock %}
+{% block extra_js %}
+  <script src="https://unpkg.com/leaflet@1.9.4/dist/leaflet.js" crossorigin=""></script>
+  <script src="{% static 'js/operations-map.js' %}"></script>
+{% endblock %}

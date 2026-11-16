@@ -6,12 +6,19 @@ from decimal import Decimal
 from typing import Any, cast
 
 from django import forms
+from django.core.exceptions import ValidationError as DjangoValidationError
 from django.db.models import Q, QuerySet
 
 from apps.accounts.forms import apply_bootstrap
 from apps.infrastructure.codes import normalize_infrastructure_code
 from apps.infrastructure.geo import point_from_lon_lat
 from apps.infrastructure.models import RailwayLine, Station
+from apps.infrastructure.spatial import (
+    DEFAULT_RADIUS_METERS,
+    MAX_RADIUS_METERS,
+    MIN_RADIUS_METERS,
+    validate_radius_meters,
+)
 
 
 class StationForm(forms.ModelForm):  # type: ignore[type-arg]
@@ -138,3 +145,39 @@ class RailwayLineForm(forms.ModelForm):  # type: ignore[type-arg]
             if query.exists():
                 self.add_error("code", "A railway line with this code already exists.")
         return cleaned
+
+
+class NearbySearchForm(forms.Form):
+    latitude = forms.DecimalField(
+        max_digits=9,
+        decimal_places=6,
+        min_value=Decimal("-90"),
+        max_value=Decimal("90"),
+        label="Latitude",
+    )
+    longitude = forms.DecimalField(
+        max_digits=10,
+        decimal_places=6,
+        min_value=Decimal("-180"),
+        max_value=Decimal("180"),
+        label="Longitude",
+    )
+    radius_meters = forms.IntegerField(
+        min_value=MIN_RADIUS_METERS,
+        max_value=MAX_RADIUS_METERS,
+        label="Radius (metres)",
+        help_text=f"Inclusive radius in metres. Maximum {MAX_RADIUS_METERS} m.",
+    )
+
+    def __init__(self, *args: Any, **kwargs: Any) -> None:
+        super().__init__(*args, **kwargs)
+        if not self.is_bound:
+            self.fields["radius_meters"].initial = DEFAULT_RADIUS_METERS
+        apply_bootstrap(self)
+
+    def clean_radius_meters(self) -> int:
+        radius = int(self.cleaned_data["radius_meters"])
+        try:
+            return validate_radius_meters(radius)
+        except DjangoValidationError as exc:
+            raise forms.ValidationError(exc.messages) from exc

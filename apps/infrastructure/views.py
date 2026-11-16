@@ -9,11 +9,12 @@ from django.core.exceptions import ValidationError
 from django.core.paginator import Paginator
 from django.http import HttpRequest, HttpResponse
 from django.shortcuts import get_object_or_404, redirect, render
+from django.urls import reverse
 from django.views import View
 
 from apps.accounts.http import remaining_querystring
 from apps.accounts.permissions import require_authenticated_user
-from apps.infrastructure.forms import RailwayLineForm, StationForm
+from apps.infrastructure.forms import NearbySearchForm, RailwayLineForm, StationForm
 from apps.infrastructure.models import RailwayLine, Station
 from apps.infrastructure.permissions import (
     AddRailwayLineRequiredMixin,
@@ -36,6 +37,13 @@ from apps.infrastructure.services import (
     deactivate_station,
     update_railway_line,
     update_station,
+)
+from apps.infrastructure.spatial import (
+    StationDistance,
+    format_distance_meters,
+    nearest_station,
+    origin_from_lon_lat,
+    stations_within_radius,
 )
 
 ITEMS_PER_PAGE = 20
@@ -93,10 +101,74 @@ class StationListView(ViewStationRequiredMixin, View):
 class StationDetailView(ViewStationRequiredMixin, View):
     def get(self, request: HttpRequest, pk: UUID) -> HttpResponse:
         station = get_object_or_404(Station, pk=pk)
+        nearest = nearest_station(origin=station.location, exclude_id=station.pk)
         return render(
             request,
             "infrastructure/station_detail.html",
-            {"station": station, "lines": lines_for_station(station)},
+            {
+                "station": station,
+                "lines": lines_for_station(station),
+                "nearest": nearest,
+                "nearest_distance": (
+                    format_distance_meters(nearest.distance_meters) if nearest else None
+                ),
+                "station_marker": {
+                    "kind": "station",
+                    "name": station.name,
+                    "code": station.code,
+                    "latitude": station.latitude,
+                    "longitude": station.longitude,
+                    "url": "",
+                },
+            },
+        )
+
+
+def _station_map_item(item: StationDistance) -> dict[str, object]:
+    return {
+        "kind": "station",
+        "name": item.station.name,
+        "code": item.station.code,
+        "latitude": item.station.latitude,
+        "longitude": item.station.longitude,
+        "url": reverse("station_detail", args=[item.station.pk]),
+        "distance_label": format_distance_meters(item.distance_meters),
+    }
+
+
+class NearbyStationsView(ViewStationRequiredMixin, View):
+    def get(self, request: HttpRequest) -> HttpResponse:
+        requested = any(key in request.GET for key in ("latitude", "longitude", "radius_meters"))
+        form = NearbySearchForm(request.GET) if requested else NearbySearchForm()
+        matches: list[StationDistance] = []
+        origin_marker: dict[str, object] | None = None
+        if form.is_bound and form.is_valid():
+            origin = origin_from_lon_lat(
+                longitude=form.cleaned_data["longitude"],
+                latitude=form.cleaned_data["latitude"],
+            )
+            matches = stations_within_radius(
+                origin=origin,
+                radius_meters=form.cleaned_data["radius_meters"],
+            )
+            origin_marker = {
+                "latitude": float(form.cleaned_data["latitude"]),
+                "longitude": float(form.cleaned_data["longitude"]),
+                "radius_meters": form.cleaned_data["radius_meters"],
+            }
+        return render(
+            request,
+            "infrastructure/nearby_stations.html",
+            {
+                "form": form,
+                "results": matches,
+                "origin": origin_marker,
+                "map_payload": {
+                    "origin": origin_marker,
+                    "stations": [_station_map_item(item) for item in matches],
+                    "incidents": [],
+                },
+            },
         )
 
 
