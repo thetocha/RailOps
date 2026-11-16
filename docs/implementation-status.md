@@ -1,7 +1,7 @@
 # Implementation status
 
 **Updated:** 2026-11-16  
-**Current phase:** Phase 10 geospatial complete on this branch. REST API remains Phase 6 (separate PR). Dashboard chrome remains Phase 8. PDF reports remain Phase 9.
+**Current phase:** Phase 11 production readiness rebasing onto merged Phase 10. REST API remains Phase 6 (separate PR). Dashboard chrome remains Phase 8. PDF reports remain Phase 9.
 
 ## Phase 1 — Project foundation
 
@@ -378,6 +378,61 @@
 | Spatial indexes are present | **Implemented and tested** (Phase 3 GIST index) |
 | Map data comes from the database | **Implemented** (station and incident querysets, not hardcoded pins) |
 
+## Phase 11 — Production readiness
+
+**Objective:** Multi-stage production image, non-root Gunicorn process, Nginx reverse proxy, dedicated migrate/collectstatic release step, backups, deploy documentation, CI image smoke.
+
+**Files affected (created or updated):**
+
+- `Dockerfile` — builder (`uv sync --frozen --no-dev`) + runtime (GDAL, `USER railops`, `HEALTHCHECK`, Gunicorn `CMD`)
+- `config/gunicorn.conf.py`, `config/settings/staticbuild.py`
+- `scripts/release.py`, `scripts/backup_database.sh`
+- `compose.production.yaml`, `deploy/nginx/default.conf`
+- `.github/workflows/ci.yml` (image smoke), `.github/workflows/deploy.yml` (GHCR push after CI on `main`)
+- `.dockerignore`, `.env.example`
+- `tests/test_production_packaging.py`, `tests/test_release.py`, `tests/test_settings.py`
+- `docs/deployment-guide.md`, `docs/security.md`, `docs/architecture.md`, `README.md`
+
+**Implementation details:**
+
+- Production `CMD` is Gunicorn only. `scripts/release.py` waits for PostgreSQL, runs `migrate`, then `collectstatic`. Compose `app` depends on `release` completing successfully.
+- Collectstatic during the image build uses `config.settings.staticbuild` so production `SECRET_KEY` / `DB_PASSWORD` are not `ENV` defaults in the image.
+- Nginx serves `/static/` and proxies `/health/` and application routes. `/media/` is not aliased.
+- Backups: `pg_dump --no-password` inside the `db` container; password is not on argv.
+- Deploy workflow pushes `ghcr.io/<owner>/RailOps:<sha>` after CI on `main`. It does not SSH to a VPS and does not claim zero downtime.
+
+**Commands executed and results:**
+
+| Command | Result |
+|---|---|
+| `uv run ruff check .` / `ruff format --check .` | All checks passed |
+| `uv run mypy` | Success: no issues found in 160 source files |
+| `uv run bandit -r apps config scripts -x tests,apps/accounts/tests,apps/infrastructure/tests,apps/incidents/tests,apps/timetables/tests,apps/integrations/tests,apps/analytics/tests` | No issues identified |
+| `uv run python manage.py check` | `gis.W001` only (GDAL 3.8.4) |
+| `uv run pytest` | **186 passed** (Phase 10 tests add to this on the rebased branch) |
+| `docker build -t railops:phase11 .` | **CI image-smoke** — no Docker CLI on the original agent host. CI builds the image and asserts UID ≠ 0, Gunicorn `--check-config`, and collected `app.css`. |
+
+## Acceptance criteria (Phase 11)
+
+| Criterion | Status |
+|---|---|
+| Application builds successfully | **Implemented** (CI image-smoke) |
+| Application runs as non-root | **Implemented** (`USER railops`, UID asserted in CI) |
+| Production settings are secure | **Implemented and tested** (Phase 1 guards + packaging tests) |
+| Deployment is reproducible | **Implemented** (`compose.production.yaml` + pinned images) |
+| Smoke tests pass | **CI image-smoke** |
+| Rollback procedure is documented | **Implemented** (`docs/deployment-guide.md`; not zero-downtime) |
+
+## Phase 11 follow-up — Bugbot findings
+
+**Status:** Implemented on this branch.
+
+| Finding | Fix |
+|---|---|
+| High — `python scripts/release.py` could not import `scripts.wait_for_db` | Release command is `python -m scripts.release` so `/app` is on `sys.path`. |
+| High — `workflow_dispatch` could push `:main` from a feature branch | Deploy job runs only on `refs/heads/main` or a successful CI `workflow_run` for `main`. |
+| High — Nginx always set `X-Forwarded-Proto` to `$scheme` (http) | `map` preserves an incoming `X-Forwarded-Proto` from a TLS terminator and falls back to `$scheme`. |
+
 ## Remaining phases
 
 | Phase | Name | Status |
@@ -388,10 +443,10 @@
 | 3 | Railway infrastructure | **Complete** |
 | 4 | Incident management | **Complete** |
 | 5 | Timetable and external integration | **Complete** |
-| 6 | REST API | Separate unmerged PR (not this branch) |
+| 6 | REST API | Separate unmerged PR |
 | 7 | Analytics | **Complete** |
-| 8 | Dashboard and frontend | Separate unmerged PR (not this branch) |
-| 9 | PDF reporting | Separate unmerged PR (not this branch) |
-| 10 | Geospatial queries and map | **Complete** (this branch) |
-| 11 | Production readiness | Not started |
+| 8 | Dashboard and frontend | Separate unmerged PR |
+| 9 | PDF reporting | Separate unmerged PR |
+| 10 | Geospatial queries and map | **Complete** (merged to main) |
+| 11 | Production readiness | **Complete** (this branch) |
 | 12 | Final verification | Not started |

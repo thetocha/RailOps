@@ -1,0 +1,62 @@
+name: Deploy
+
+on:
+  workflow_run:
+    workflows: ["CI"]
+    types: [completed]
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  packages: write
+
+jobs:
+  image:
+    name: Build, smoke, and push
+    if: >-
+      (github.event_name == 'workflow_dispatch' && github.ref == 'refs/heads/main') ||
+      (github.event.workflow_run.conclusion == 'success' &&
+       github.event.workflow_run.head_branch == 'main')
+    runs-on: ubuntu-latest
+    env:
+      IMAGE: ghcr.io/${{ github.repository }}
+      TARGET_SHA: ${{ github.event.workflow_run.head_sha || github.sha }}
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+        with:
+          ref: ${{ env.TARGET_SHA }}
+
+      - name: Build production image
+        run: docker build -t "railops:${TARGET_SHA}" .
+
+      - name: Smoke non-root process and Gunicorn config
+        env:
+          SECRET_KEY: ci-production-smoke-secret-key-xxxxxxxxxxxxxxxxxxx
+          ALLOWED_HOSTS: localhost
+          DB_PASSWORD: ci-production-smoke-db-password
+          SECURE_SSL_REDIRECT: "false"
+        run: |
+          uid="$(docker run --rm --entrypoint python "railops:${TARGET_SHA}" -c 'import os; print(os.getuid())')"
+          test "${uid}" != "0"
+          docker run --rm \
+            -e SECRET_KEY \
+            -e ALLOWED_HOSTS \
+            -e DB_PASSWORD \
+            -e SECURE_SSL_REDIRECT \
+            "railops:${TARGET_SHA}" gunicorn --check-config --config config/gunicorn.conf.py config.wsgi:application
+
+      - name: Log in to GitHub Container Registry
+        run: echo "${{ secrets.GITHUB_TOKEN }}" | docker login ghcr.io -u "${{ github.actor }}" --password-stdin
+
+      - name: Push image tags
+        run: |
+          docker tag "railops:${TARGET_SHA}" "${IMAGE}:${TARGET_SHA}"
+          docker tag "railops:${TARGET_SHA}" "${IMAGE}:main"
+          docker push "${IMAGE}:${TARGET_SHA}"
+          docker push "${IMAGE}:main"
+
+      - name: Deployment is not automatic
+        run: |
+          echo "Image smoke succeeded. VPS cut-over, migrations, and rollback remain a dedicated host step."
+          echo "See docs/deployment-guide.md. This workflow does not connect to a VPS and does not run migrate in app workers."

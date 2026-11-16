@@ -1,6 +1,6 @@
 # RailOps architecture
 
-**Status:** Phase 1–5, 7, and 10 exist (Django project, PostGIS, custom user, session auth, role groups, stations, railway lines, incident lifecycle, timetable import, Pandas analytics, spatial queries and operations map). REST API, dashboard chrome, and PDF reports remain later phases.
+**Status:** Phase 1–5, 7, 10, and 11 exist (Django project, PostGIS, custom user, session auth, role groups, stations, railway lines, incident lifecycle, timetable import, Pandas analytics, spatial queries and operations map, production image/Gunicorn/Nginx). REST API, dashboard chrome, and PDF reports remain later phases.
 **Date:** 2026-11-15  
 **Audience:** Developers inheriting this repository.
 
@@ -51,12 +51,13 @@ Browser  -->  Nginx (prod)  -->  Gunicorn  -->  Django (modular monolith)
                                          v
                               PostgreSQL + PostGIS
 
-Dev: Django runserver (or container) + PostGIS via Docker Compose.
+Dev: Django runserver (or container) + PostGIS via `compose.yaml`.
+Prod: `compose.production.yaml` — Nginx, Gunicorn, dedicated `release` migrate/collectstatic service, PostGIS.
 PDF files: object/local media storage, not PostgreSQL BYTEA.
 External timetable: adapter (mock / CSV / optional HTTPX client).
 ```
 
-Do not run `runserver` in production. Do not auto-migrate on every worker start.
+Do not run `runserver` in production. Do not auto-migrate on every worker start. See [deployment-guide](deployment-guide.md).
 
 ## 5. Application boundaries
 

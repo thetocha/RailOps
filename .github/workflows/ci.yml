@@ -77,3 +77,30 @@ jobs:
 
       - name: Tests
         run: uv run pytest
+
+  image-smoke:
+    name: Production image smoke
+    runs-on: ubuntu-latest
+    steps:
+      - name: Check out repository
+        uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1 # v7.0.1
+
+      - name: Build production image
+        run: docker build -t railops:ci .
+
+      - name: Verify non-root user and Gunicorn configuration
+        env:
+          SECRET_KEY: ci-production-smoke-secret-key-xxxxxxxxxxxxxxxxxxx
+          ALLOWED_HOSTS: localhost
+          DB_PASSWORD: ci-production-smoke-db-password
+          SECURE_SSL_REDIRECT: "false"
+        run: |
+          uid="$(docker run --rm --entrypoint python railops:ci -c 'import os; print(os.getuid())')"
+          test "${uid}" != "0"
+          docker run --rm \
+            -e SECRET_KEY \
+            -e ALLOWED_HOSTS \
+            -e DB_PASSWORD \
+            -e SECURE_SSL_REDIRECT \
+            railops:ci gunicorn --check-config --config config/gunicorn.conf.py config.wsgi:application
+          docker run --rm --entrypoint python railops:ci -c "from pathlib import Path; assert Path('/app/staticfiles/css/app.css').is_file()"

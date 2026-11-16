@@ -1,6 +1,6 @@
 # Security (planning)
 
-**Status:** Phase 10. Authentication, infrastructure, incident, timetable-sync, analytics, and geospatial authorization are implemented; REST API and report download controls remain later phases.
+**Status:** Phase 11. Authentication, infrastructure, incident, timetable-sync, analytics, geospatial authorization, and production runtime hardening are implemented; REST API and report download controls remain later phases.
 
 - Django password hashing; CSRF; session cookies `Secure`/`HttpOnly` in production; `ALLOWED_HOSTS`; CSRF trusted origins.
 - Groups: Administrator / Dispatcher / Viewer. Views check Django permissions, not group names.
@@ -17,5 +17,7 @@
 - Validate all inputs including CSV, coordinates, report ranges.
 - Do not log passwords, tokens, API keys, cookies, or full provider payloads.
 - Report files: authorised download only; no path traversal.
-- Dedicated DB user, not superuser, in production.
-- Bandit + pip-audit in CI; do not disable security to pass tests.
+- Dedicated DB user, not superuser, in production. `scripts/backup_database.sh` dumps via `pg_dump --no-password` inside the database container so the password is not on argv.
+- Production image runs as UID 1000 (`railops`), uses Gunicorn (not `runserver`), and does not run migrations in `CMD`. Collectstatic during the image build uses `config.settings.staticbuild` so production secrets are not baked into `ENV`.
+- Nginx sets `server_tokens off`, does not enable autoindex, and does not alias `/media/` (media/report files stay behind Django auth).
+- Bandit + pip-audit in CI; production image smoke checks the process is not root. Do not disable security to pass tests.

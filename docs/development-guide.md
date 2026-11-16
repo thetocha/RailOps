@@ -1,6 +1,6 @@
 # Development guide
 
-**Status:** Phase 10. Commands below were run on 2026-11-16.
+**Status:** Phase 11 (includes Phase 10 geospatial). Commands below were run on 2026-11-16.
 
 ## Prerequisites
 
@@ -30,7 +30,7 @@ APP_PUBLISH_PORT=8001
 
 Development settings merge CSRF origins for `http://localhost` and `http://127.0.0.1` on both port **8000** and `APP_PUBLISH_PORT`. You can still set `CSRF_TRUSTED_ORIGINS` explicitly; the publish-port origins are added if missing.
 
-The production Dockerfile defaults to `DJANGO_SETTINGS_MODULE=config.settings.production`. Compose overrides that to `config.settings.development` so local `runserver` keeps working.
+The production Dockerfile defaults to `DJANGO_SETTINGS_MODULE=config.settings.production`. `compose.yaml` overrides that to `config.settings.development` so local `runserver` keeps working. Production topology (`compose.production.yaml`, Nginx, Gunicorn, `scripts/release.py`) is documented in `docs/deployment-guide.md` and is not the local development path.
 
 Inside the Compose network the database still listens on 5432 (`DB_HOST=db`). `DB_PORT` is the container port, not the host publish port.
 
